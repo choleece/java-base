@@ -14,6 +14,19 @@
 [!LinkedList结构图地址](https://static.javatpoint.com/images/linkedlist.png)
 [!LinkedList知识点学习](https://www.javatpoint.com/java-linkedlist)
 
+### set
+
 #### HashSet
 [!HashSet结构图地址](https://static.javatpoint.com/images/hashset.png)
 [!HashSet知识点学习](https://www.javatpoint.com/java-hashset)
+
+#### LinkedHashSet
+[!LinkedHashSet结构图地址](https://static.javatpoint.com/images/linkedhashset.png)
+[!LinkedHashSet知识点学习](https://www.javatpoint.com/java-linkedhashset)
+
+
+## map类图
+[!Map结构图地址](https://static.javatpoint.com/images/core/java-map-hierarchy.png)
+[!Map知识点学习](https://www.javatpoint.com/java-map)
+
+#### HashMap 
