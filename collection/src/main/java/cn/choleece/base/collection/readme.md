@@ -13,3 +13,7 @@
 #### LinkedList
 [!LinkedList结构图地址](https://static.javatpoint.com/images/linkedlist.png)
 [!LinkedList知识点学习](https://www.javatpoint.com/java-linkedlist)
+
+#### HashSet
+[!HashSet结构图地址](https://static.javatpoint.com/images/hashset.png)
+[!HashSet知识点学习](https://www.javatpoint.com/java-hashset)
