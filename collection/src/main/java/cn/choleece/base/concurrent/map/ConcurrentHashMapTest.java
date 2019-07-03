@@ -5,4 +5,6 @@ package cn.choleece.base.concurrent.map;
  * Created by choleece on 2019/6/16.
  */
 public class ConcurrentHashMapTest {
+    public static void main(String[] args) {
+    }
 }
