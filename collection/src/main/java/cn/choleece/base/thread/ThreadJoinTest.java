@@ -1,9 +1,9 @@
 package cn.choleece.base.thread;
 
 /**
- * Java线程的实现方式 有两种方式，一种是implements runnable, 一种是extends thread, 再有就是通过线程池
+ * join方法使调用该方法的线程再次之前执行完毕，在b线程里执行a.join()，那么b会等待a执行完成后再执行b的逻辑
  */
-public class ThreadTest implements Runnable {
+public class ThreadJoinTest implements Runnable {
 
     @Override
     public void run() {
@@ -16,11 +16,11 @@ public class ThreadTest implements Runnable {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        ThreadTest threadTest = new ThreadTest();
+        ThreadJoinTest threadTest = new ThreadJoinTest();
         Thread thread = new Thread(threadTest);
         thread.start();
 
-        Thread.sleep(300);
+        thread.join();
 
         System.out.println("main thread run......");
     }
