@@ -1,4 +1,4 @@
-package cn.choleece.base.leetcode;
+package cn.choleece.base.leetcode.code01;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +15,7 @@ public class TwoNumberSum01 {
         if (target > Integer.MAX_VALUE || target < Integer.MIN_VALUE) {
             throw new IllegalArgumentException("illegal target value");
         }
-        Map<Integer, Integer> indexMap = new HashMap<>(16);
+        Map<Integer, Integer> indexMap = new HashMap(16);
         int firstIndex = -1, secondIndex = -1;
         for (int i = 0; i < nums.length; i++) {
             int num = nums[i];
