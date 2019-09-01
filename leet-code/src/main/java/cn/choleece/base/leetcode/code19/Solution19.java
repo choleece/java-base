@@ -29,16 +29,10 @@ public class Solution19 {
             cur = cur.next;
         }
 
-        if (n > length + 1) {
-            return null;
-        }
-        if (n == 1) {
-            if (length + 1 == 1) {
-                return null;
-            }
-            p.next = null;
-        } else if (n == length + 1) {
+        if (n == length + 1) {
             head = head.next;
+        } else if (p.next == null) {
+            head = null;
         } else {
             p.next = p.next.next;
         }
