@@ -23,12 +23,16 @@ public class Solution61 {
             ++length;
         }
 
+        int remainder = k % length;
+        if (remainder == 0) {
+            return head;
+        }
+
         // build a cycle list
         tail.next = head;
 
         ListNode cur = head;
 
-        int remainder = k % length;
         int step = length - remainder;
         ListNode preTail = tmpHead;
         while (step > 0) {
@@ -49,7 +53,7 @@ public class Solution61 {
 
         ListNode.loopList(head);
 
-        head = rotateRight(head, 3);
+        head = rotateRight(head, 2);
 
         ListNode.loopList(head);
     }
