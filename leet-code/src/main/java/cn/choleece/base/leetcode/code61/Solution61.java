@@ -6,6 +6,8 @@ import java.util.Arrays;
 
 /**
  * Given a linked list, rotate the list to the right by k places, where k is non-negative.
+ * 思路1：构建一个环形链表，然后根据k对环进行切分
+ * 思路2：对单链表切分成两条链，然后将第二条链的tail.next = 第一条链的head
  */
 public class Solution61 {
     public static ListNode rotateRight(ListNode head, int k) {
