@@ -11,7 +11,7 @@ import java.util.Arrays;
  * @author choleece
  *
  * 思路1： 将链表拆成小于x 和 大于等于x的两条链，然后将大链链在小链后边即可
- * 思路2：交换
+ * 思路2：交换，如果出现过比x大的数才进行交换，否则保持原来的状态
  */
 public class Solution86 {
 
@@ -23,22 +23,29 @@ public class Solution86 {
         ListNode tmpNode = new ListNode(-1);
         tmpNode.next = head;
 
-        ListNode cur = head, preCur = tmpNode, insertPoint = head;
+        ListNode cur = head, preCur = tmpNode, insertPoint = tmpNode;
 
+        boolean hasX = false;
         while (cur != null) {
-            if (cur.val < x && cur != head) {
+            if (cur.val >= x) {
+                hasX = true;
+            }
+            boolean needSwap = cur.val < x && hasX;
+            if (needSwap) {
                 preCur.next = cur.next;
                 cur.next = insertPoint.next;
                 insertPoint.next = cur;
-                cur = preCur.next;
+
                 insertPoint = insertPoint.next;
+                cur = preCur.next;
             } else {
                 cur = cur.next;
                 preCur = preCur.next;
+                if (insertPoint.next.val < x) {
+                    insertPoint = insertPoint.next;
+                }
             }
         }
-
-        System.out.println("insertPoint: " + insertPoint.val);
 
         return tmpNode.next;
     }
@@ -75,7 +82,7 @@ public class Solution86 {
 
         ListNode.loopList(head);
 
-        head = partition(head, 3);
+        head = partition1(head, 3);
 
         ListNode.loopList(head);
     }
