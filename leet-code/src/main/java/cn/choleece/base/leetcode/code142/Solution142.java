@@ -13,7 +13,7 @@ import java.util.Set;
  */
 public class Solution142 {
 
-    public static ListNode detectCycle(ListNode head) {
+    public static ListNode detectCycle1(ListNode head) {
         if (head == null || head.next == null) {
             return null;
         }
@@ -35,6 +35,38 @@ public class Solution142 {
         }
 
         return null;
+    }
+
+    public static ListNode detectCycle(ListNode head) {
+        if (head == null || head.next == null) {
+            return null;
+        }
+
+        if (head == head.next) {
+            return head;
+        }
+
+        ListNode fast = head, slow = head;
+
+        while (fast != null && fast.next != null) {
+            fast = fast.next.next;
+            slow = slow.next;
+
+            if (slow.equals(fast)) {
+                break;
+            }
+        }
+
+        if (fast == null || fast.next == null) {
+            return null;
+        }
+        slow = head;
+        while (!slow.equals(fast)) {
+            fast = fast.next;
+            slow = slow.next;
+        }
+
+        return fast;
     }
 
     public static void main(String[] args) {
