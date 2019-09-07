@@ -21,7 +21,7 @@ public class ListNode {
     }
 
     public static ListNode initList(List<Integer> nums) {
-        ListNode head = new ListNode(0);
+        ListNode head = new ListNode(1);
         ListNode p = head;
         for (int num : nums) {
             ListNode tmp = new ListNode(num);
