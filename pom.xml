@@ -12,6 +12,7 @@
         <module>collection</module>
         <module>leet-code</module>
         <module>data-structure</module>
+        <module>design-pattern</module>
     </modules>
 
 
