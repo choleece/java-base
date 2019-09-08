@@ -13,6 +13,7 @@
         <module>leet-code</module>
         <module>data-structure</module>
         <module>design-pattern</module>
+        <module>algorithm</module>
     </modules>
 
 
