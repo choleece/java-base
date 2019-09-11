@@ -3,6 +3,11 @@ package cn.choleece.base.algorithm.sort;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * 冒泡排序 https://zh.wikipedia.org/wiki/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F
+ * 时间复杂度 O(n^2) 空间负责度O(1)
+ * @author choleece
+ */
 public class BubbleSort {
 
     public static void bubbleSort(List<Integer> nums) {
