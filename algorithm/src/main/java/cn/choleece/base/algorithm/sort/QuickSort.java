@@ -2,7 +2,8 @@ package cn.choleece.base.algorithm.sort;
 
 /**
  * 快速排序 https://zh.wikipedia.org/wiki/%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F
- *
+ * 时间复杂度O(n log n), 最坏对情况为已经排好序对，时间复杂度为O(n^2)
+ * 空间负责度为O(1)
  * @author choleece
  */
 public class QuickSort {
