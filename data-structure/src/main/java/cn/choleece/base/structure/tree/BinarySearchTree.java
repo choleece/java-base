@@ -161,11 +161,32 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
         return root;
     }
 
+    /**
+     * 如果空，直接返回，如果是叶子节点，直接删除，如果只有一个孩子，直接将孩子节点替换掉当前要删除对节点，如果右两个孩子，用右子树最小对节点（也即右子树最左边对节点）将内容替换掉，然后删除最小节点
+     * @param t
+     */
     public void remove(T t) {
         root = remove(t, root);
     }
 
     private BinaryNode<T> remove(T t, BinaryNode<T> root) {
+        if (root == null) {
+            return null;
+        }
+
+        int compareResult = t.compareTo(root.e);
+        if (compareResult > 0) {
+            root.right = remove(t, root.right);
+        } else if (compareResult < 0) {
+            root.left = remove(t, root.left);
+        } else if (root.left != null && root.right != null) {
+            BinaryNode<T> node = findMin(root.right);
+            root.e = node.e;
+            root.right = remove(node.e, root.right);
+        } else {
+            root = root.left != null ? root.left : root.right;
+        }
+
         return root;
     }
 
