@@ -3,6 +3,10 @@ package cn.choleece.base.structure.list;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * LinkList Node
+ * @author choleece
+ */
 public class ListNode {
     public int val;
     public ListNode next;
