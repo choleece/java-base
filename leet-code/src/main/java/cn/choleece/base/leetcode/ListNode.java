@@ -30,4 +30,15 @@ public class ListNode {
         }
         return head;
     }
+
+    public static ListNode initList(List<Integer> nums, int headVal) {
+        ListNode head = new ListNode(headVal);
+        ListNode p = head;
+        for (int num : nums) {
+            ListNode tmp = new ListNode(num);
+            p.next = tmp;
+            p = tmp;
+        }
+        return head;
+    }
 }
