@@ -10,6 +10,9 @@ public class ReentrantLockTest {
     private String criticalResource;
 
     public synchronized String getCriticalResource() {
+
+        System.out.println("current thread is " + Thread.currentThread().getName());
+
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
