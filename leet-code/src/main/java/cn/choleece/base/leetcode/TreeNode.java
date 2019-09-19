@@ -12,6 +12,12 @@ public class TreeNode {
         val = x;
     }
 
+    public TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+
     public static TreeNode initTree() {
         TreeNode root = new TreeNode(0);
 
