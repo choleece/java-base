@@ -15,7 +15,19 @@
         <module>design-pattern</module>
         <module>algorithm</module>
         <module>spring-source</module>
+        <module>spring-boot</module>
     </modules>
 
+    <properties>
+        <lombok-version>1.18.10</lombok-version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok-version}</version>
+        </dependency>
+    </dependencies>
 
 </project>

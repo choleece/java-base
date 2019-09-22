@@ -3,6 +3,8 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="messageService" class="cn.choleece.base.springsource.ioc.service.impl.MessageServiceImpl"/>
+    <bean name="messageService" class="cn.choleece.base.springsource.ioc.service.impl.MessageServiceImpl"/>
+
+    <bean name="springContextUtil" class="cn.choleece.base.springsource.util.SpringContextUtils"/>
 
 </beans>
