@@ -26,7 +26,12 @@ public class EightThreadLock {
         /**
          * 测试方法4
          */
-        testThread4();
+//        testThread4();
+
+        /**
+         * 测试方法5
+         */
+//        testThread5();
     }
 
     /**
@@ -255,6 +260,61 @@ public class EightThreadLock {
             @Override
             public void run() {
                 four2.readMutex2();
+            }
+        }).start();
+    }
+
+    /**
+     * 普通的的方法上加锁，一个加锁，一个不加锁
+     */
+    static class LockFive {
+        private String mutex = "choleece";
+
+        public synchronized String readMutex() {
+
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println(Thread.currentThread().getName() + " read mutex");
+            return mutex;
+        }
+
+        public String readMutex2() {
+
+            System.out.println(Thread.currentThread().getName() + " read mutex2");
+            return mutex;
+        }
+    }
+
+    /**
+     * 锁在对象上，一个方法加锁，一个方法不加锁，不加锁的方法不参与竞争，所以不用关心锁是否被占用，打印结果如下：
+     * Thread-1 read mutex2
+     * Thread-0 read mutex
+     */
+    public static void testThread5() {
+
+        LockFive five = new LockFive();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                five.readMutex();
+            }
+        }).start();
+
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                five.readMutex2();
             }
         }).start();
     }
