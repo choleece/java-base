@@ -2,7 +2,8 @@ package cn.choleece.base.thread;
 
 /**
  * @author choleece
- * @Description: 线程8锁
+ * @Description: 线程8锁 主要考查锁在对象上还是类上，如果方法上没有加锁，那么不用关心该对象是否被其他线程占用，只有在竞争的时候，才需要考虑锁的情况
+ * 锁在普通方法上，锁住的是对象（实例，此时需要注意是否为同一实例），锁在静态方法上，锁住的是类
  * @Date 2019-10-09 21:59
  **/
 public class EightThreadLock {
