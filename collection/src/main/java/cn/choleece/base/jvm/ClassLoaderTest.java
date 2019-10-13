@@ -1,6 +1,7 @@
 package cn.choleece.base.jvm;
 
 /**
+ * JVN 参考 https://crossoverjie.top/JCSprout/#/jvm/MemoryAllocation
  * @author choleece
  * @Description: Java 双亲委派类加载机制
  * @Date 2019-10-13 16:08
