@@ -1,3 +1,8 @@
+## Java 面试知识点整理
+1. https://github.com/crossoverJie/JCSprout/blob/master/README.md
+
+2. https://crossoverjie.top/JCSprout/#/jvm/MemoryAllocation
+
 ## Java 基本类型占内存大小
 1. 整型
 
