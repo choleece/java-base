@@ -17,6 +17,7 @@
         <module>spring-source</module>
         <module>spring-boot</module>
         <module>miao-sha</module>
+        <module>framework</module>
     </modules>
 
     <properties>
