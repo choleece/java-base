@@ -1,16 +1,21 @@
 package cn.choleece.base.framework.redis.connection.jedis;
 
 import cn.choleece.base.framework.exception.DataAccessException;
+import cn.choleece.base.framework.redis.connection.RedisClusterNode;
 import cn.choleece.base.framework.redis.connection.RedisServer;
-import cn.choleece.base.framework.redis.connection.convert.Converters;
-import org.springframework.core.convert.converter.Converter;
+import cn.choleece.base.framework.redis.connection.RedisZSetCommands;
+import cn.choleece.base.framework.redis.connection.convert.*;
+import cn.choleece.base.framework.redis.core.types.Expiration;
+import cn.choleece.base.framework.redis.core.types.RedisClientInfo;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import redis.clients.jedis.BitOP;
+import redis.clients.jedis.GeoCoordinate;
 import redis.clients.jedis.GeoRadiusResponse;
+import redis.clients.jedis.Tuple;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -27,11 +32,11 @@ public abstract class JedisConverters extends Converters {
     private static final ListConverter<String, byte[]> STRING_LIST_TO_BYTE_LIST;
     private static final SetConverter<String, byte[]> STRING_SET_TO_BYTE_SET;
     private static final MapConverter<String, byte[]> STRING_MAP_TO_BYTE_MAP;
-    private static final SetConverter<Tuple, org.springframework.data.redis.connection.RedisZSetCommands.Tuple> TUPLE_SET_TO_TUPLE_SET;
+    private static final SetConverter<Tuple, RedisZSetCommands.Tuple> TUPLE_SET_TO_TUPLE_SET;
     private static final Converter<Exception, DataAccessException> EXCEPTION_CONVERTER = new JedisExceptionConverter();
     private static final Converter<String[], List<RedisClientInfo>> STRING_TO_CLIENT_INFO_CONVERTER = new StringToRedisClientInfoConverter();
-    private static final Converter<Tuple, org.springframework.data.redis.connection.RedisZSetCommands.Tuple> TUPLE_CONVERTER;
-    private static final ListConverter<Tuple, org.springframework.data.redis.connection.RedisZSetCommands.Tuple> TUPLE_LIST_TO_TUPLE_LIST_CONVERTER;
+    private static final Converter<Tuple, RedisZSetCommands.Tuple> TUPLE_CONVERTER;
+    private static final ListConverter<Tuple, RedisZSetCommands.Tuple> TUPLE_LIST_TO_TUPLE_LIST_CONVERTER;
     private static final Converter<Object, RedisClusterNode> OBJECT_TO_CLUSTER_NODE_CONVERTER;
     private static final Converter<Expiration, byte[]> EXPIRATION_TO_COMMAND_OPTION_CONVERTER;
     private static final Converter<SetOption, byte[]> SET_OPTION_TO_COMMAND_OPTION_CONVERTER;
@@ -60,7 +65,7 @@ public abstract class JedisConverters extends Converters {
         return STRING_TO_BYTES;
     }
 
-    public static ListConverter<Tuple, org.springframework.data.redis.connection.RedisZSetCommands.Tuple> tuplesToTuples() {
+    public static ListConverter<Tuple, RedisZSetCommands.Tuple> tuplesToTuples() {
         return TUPLE_LIST_TO_TUPLE_LIST_CONVERTER;
     }
 

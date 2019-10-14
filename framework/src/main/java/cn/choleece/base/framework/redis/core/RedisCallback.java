@@ -1,6 +1,4 @@
-package cn.choleece.base.framework.redis.connection.core;
-
-import org.springframework.lang.Nullable;
+package cn.choleece.base.framework.redis.core;
 
 /**
  * @description: TODO

@@ -1,13 +1,6 @@
-package cn.choleece.base.framework.redis.connection.core;
+package cn.choleece.base.framework.redis.core;
 
 import org.springframework.lang.Nullable;
-
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author choleece

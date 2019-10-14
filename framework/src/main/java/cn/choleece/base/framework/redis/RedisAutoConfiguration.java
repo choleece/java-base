@@ -1,6 +1,6 @@
 package cn.choleece.base.framework.redis;
 
-import cn.choleece.base.framework.redis.connection.core.RedisOperations;
+import cn.choleece.base.framework.redis.core.RedisOperations;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
