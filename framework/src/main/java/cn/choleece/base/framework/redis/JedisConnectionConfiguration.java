@@ -23,6 +23,4 @@ public class JedisConnectionConfiguration extends RedisConnectionConfiguration {
         this.properties = properties;
         this.builderCustomizers = builderCustomizers;
     }
-
-
 }
