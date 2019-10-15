@@ -85,17 +85,9 @@ public interface RedisStringCommands {
     Long bitOp(RedisStringCommands.BitOperation var1, byte[] var2, byte[]... var3);
 
     @Nullable
-    default Long bitPos(byte[] key, boolean bit) {
-        return this.bitPos(key, bit, RedisZSetCommands.Range.unbounded());
-    }
-
-    @Nullable
-    Long bitPos(byte[] var1, boolean var2, Range<Long> var3);
-
-    @Nullable
     Long strLen(byte[] var1);
 
-    public enum SetOption {
+    public static enum SetOption {
         UPSERT,
         SET_IF_ABSENT,
         SET_IF_PRESENT;
@@ -116,7 +108,7 @@ public interface RedisStringCommands {
         }
     }
 
-    public enum BitOperation {
+    public static enum BitOperation {
         AND,
         OR,
         XOR,

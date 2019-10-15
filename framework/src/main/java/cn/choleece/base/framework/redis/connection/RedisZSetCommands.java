@@ -1,5 +1,7 @@
 package cn.choleece.base.framework.redis.connection;
 
+import cn.choleece.base.framework.redis.core.Cursor;
+import cn.choleece.base.framework.redis.core.ScanOptions;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -160,7 +162,7 @@ public interface RedisZSetCommands {
     @Nullable
     Long zInterStore(byte[] var1, RedisZSetCommands.Aggregate var2, RedisZSetCommands.Weights var3, byte[]... var4);
 
-    Cursor<RedisZSetCommands.Tuple> zScan(byte[] var1, ScanOptions var2);
+    Cursor<Tuple> zScan(byte[] var1, ScanOptions var2);
 
     @Nullable
     default Set<byte[]> zRangeByScore(byte[] key, String min, String max) {
