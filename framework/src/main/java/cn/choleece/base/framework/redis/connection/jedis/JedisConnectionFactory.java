@@ -377,6 +377,7 @@ public class JedisConnectionFactory implements InitializingBean, DisposableBean,
      * (non-Javadoc)
      * @see org.springframework.beans.factory.DisposableBean#destroy()
      */
+    @Override
     public void destroy() {
 
         if (getUsePool() && pool != null) {
@@ -409,6 +410,7 @@ public class JedisConnectionFactory implements InitializingBean, DisposableBean,
      * (non-Javadoc)
      * @see org.springframework.data.redis.connection.RedisConnectionFactory#getConnection()
      */
+    @Override
     public RedisConnection getConnection() {
 
         if (isRedisClusterAware()) {
@@ -441,6 +443,7 @@ public class JedisConnectionFactory implements InitializingBean, DisposableBean,
      * (non-Javadoc)
      * @see org.springframework.dao.support.PersistenceExceptionTranslator#translateExceptionIfPossible(java.lang.RuntimeException)
      */
+    @Override
     public DataAccessException translateExceptionIfPossible(RuntimeException ex) {
         return EXCEPTION_TRANSLATION.translate(ex);
     }
@@ -744,6 +747,7 @@ public class JedisConnectionFactory implements InitializingBean, DisposableBean,
      *
      * @return Whether or not to convert pipeline and tx results.
      */
+    @Override
     public boolean getConvertPipelineAndTxResults() {
         return convertPipelineAndTxResults;
     }

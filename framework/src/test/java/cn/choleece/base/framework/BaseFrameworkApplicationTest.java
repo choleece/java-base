@@ -1,7 +1,6 @@
 package cn.choleece.base.framework;
 
 import cn.choleece.base.framework.config.BeanTest;
-import cn.choleece.base.framework.config.RedisConfig;
 import cn.choleece.base.framework.template.CusRedisTemplate;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,10 +27,8 @@ public class BaseFrameworkApplicationTest {
 
         System.out.println(redisTemplate.toString());
 
-        redisTemplate.opsForValue().set("name", "choleece");
+        redisTemplate.opsForValue().set("name", "chaoli");
 
         System.out.println(redisTemplate.opsForValue().get("name"));
-
-        System.out.println(redisTemplate.getClientList().get(0));
     }
 }

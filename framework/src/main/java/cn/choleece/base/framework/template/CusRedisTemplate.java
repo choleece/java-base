@@ -9,9 +9,10 @@ import cn.choleece.base.framework.redis.core.types.RedisClientInfo;
 import cn.choleece.base.framework.redis.serializer.JdkSerializationRedisSerializer;
 import cn.choleece.base.framework.redis.serializer.RedisSerializer;
 import cn.choleece.base.framework.redis.serializer.SerializationUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -28,6 +29,8 @@ import java.util.concurrent.TimeUnit;
  * @Date 2019-10-15 21:25
  **/
 public class CusRedisTemplate<K, V> extends RedisAccessor implements RedisOperations<K, V>, BeanClassLoaderAware {
+
+    Logger log = LogManager.getLogger(CusRedisTemplate.class);
 
     /**
      * 是否开启事物支持
@@ -120,6 +123,8 @@ public class CusRedisTemplate<K, V> extends RedisAccessor implements RedisOperat
      */
     @Override
     public void afterPropertiesSet() {
+        log.info("custom redis template initialized");
+
         super.afterPropertiesSet();
         boolean defaultUsed = false;
 

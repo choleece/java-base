@@ -33,18 +33,18 @@ public class RedisConfig {
      * @param connectionFactory
      * @return
      */
-    @Bean
-    public CusRedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
-        CusRedisTemplate<String, Object> template = new CusRedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setValueSerializer(jackson2JsonRedisSerializer());
-        //使用StringRedisSerializer来序列化和反序列化redis的key值
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(jackson2JsonRedisSerializer());
-        template.afterPropertiesSet();
-        return template;
-    }
+//    @Bean
+//    public CusRedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+//        CusRedisTemplate<String, Object> template = new CusRedisTemplate<>();
+//        template.setConnectionFactory(connectionFactory);
+//        template.setValueSerializer(jackson2JsonRedisSerializer());
+//        //使用StringRedisSerializer来序列化和反序列化redis的key值
+//        template.setKeySerializer(new StringRedisSerializer());
+//        template.setHashKeySerializer(new StringRedisSerializer());
+//        template.setHashValueSerializer(jackson2JsonRedisSerializer());
+//        template.afterPropertiesSet();
+//        return template;
+//    }
 
     /**
      * json序列化

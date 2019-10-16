@@ -19,6 +19,7 @@
         <jedis>2.9.3</jedis>
         <jackson>2.9.9</jackson>
         <spring>5.1.9.RELEASE</spring>
+        <zk.version>0.11</zk.version>
     </properties>
 
     <dependencies>
@@ -61,7 +62,14 @@
             <artifactId>spring-tx</artifactId>
             <version>${spring}</version>
         </dependency>
-    </dependencies>
 
+        <!-- zookeeper -->
+        <dependency>
+            <groupId>com.101tec</groupId>
+            <artifactId>zkclient</artifactId>
+            <version>${zk.version}</version>
+        </dependency>
+
+    </dependencies>
 
 </project>
