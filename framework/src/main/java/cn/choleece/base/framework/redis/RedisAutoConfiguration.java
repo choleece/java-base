@@ -27,6 +27,9 @@ import java.net.UnknownHostException;
  * 类似于 AnnotationConfigApplicationContext.register(java.lang.Class<?>...) 这种操作
  * 参考: https://www.jianshu.com/p/56d4cadbe5c9
  *      https://www.jianshu.com/p/afd2c49394c2
+ *
+ * 关于自动装配，制作starter:
+ * 参考: https://www.jianshu.com/p/bbf439c8a203
  **/
 @Configuration
 @ConditionalOnClass(RedisOperations.class)
@@ -35,8 +38,8 @@ import java.net.UnknownHostException;
 public class RedisAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean(name = "redisTemplate")
-    public CusRedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory)
+    @ConditionalOnMissingBean(name = "cusRedisTemplate")
+    public CusRedisTemplate<Object, Object> cusRedisTemplate(RedisConnectionFactory redisConnectionFactory)
             throws UnknownHostException {
         CusRedisTemplate<Object, Object> template = new CusRedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);

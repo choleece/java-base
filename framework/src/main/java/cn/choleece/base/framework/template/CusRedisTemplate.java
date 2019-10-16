@@ -11,6 +11,7 @@ import cn.choleece.base.framework.redis.serializer.RedisSerializer;
 import cn.choleece.base.framework.redis.serializer.SerializationUtils;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;

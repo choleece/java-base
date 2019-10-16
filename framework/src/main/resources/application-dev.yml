@@ -1,0 +1,6 @@
+# choleece 自定义配置
+choleece:
+  spring:
+    redis:
+      host: 127.0.0.1
+      port: 6379

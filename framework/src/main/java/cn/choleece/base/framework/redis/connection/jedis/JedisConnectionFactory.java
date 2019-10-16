@@ -270,6 +270,8 @@ public class JedisConnectionFactory implements InitializingBean, DisposableBean,
      */
     public void afterPropertiesSet() {
 
+        log.info("初始化完成....");
+
         if (shardInfo == null && clientConfiguration instanceof MutableJedisClientConfiguration) {
 
             providedShardInfo = false;
