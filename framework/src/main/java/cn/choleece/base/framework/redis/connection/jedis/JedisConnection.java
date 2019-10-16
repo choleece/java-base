@@ -9,10 +9,7 @@ import cn.choleece.base.framework.redis.connection.*;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Pipeline;
-import redis.clients.jedis.Response;
-import redis.clients.jedis.Transaction;
+import redis.clients.jedis.*;
 import redis.clients.util.Pool;
 
 import java.util.*;

@@ -17,6 +17,8 @@
         <spring-boot-version>2.1.8.RELEASE</spring-boot-version>
         <commons-pool2-version>2.2</commons-pool2-version>
         <jedis>2.9.3</jedis>
+        <jackson>2.9.9</jackson>
+        <spring>5.1.9.RELEASE</spring>
     </properties>
 
     <dependencies>
@@ -46,6 +48,18 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
             <version>${commons-pool2-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+            <version>${spring}</version>
         </dependency>
     </dependencies>
 

@@ -1,4 +1,4 @@
-package cn.choleece.base.framework.redis.connection.jedis;
+package cn.choleece.base.framework.redis.connection.util;
 
 import cn.choleece.base.framework.redis.connection.MessageListener;
 import cn.choleece.base.framework.redis.connection.RedisInvalidSubscriptionException;

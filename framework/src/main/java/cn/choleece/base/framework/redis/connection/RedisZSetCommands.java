@@ -195,10 +195,13 @@ public interface RedisZSetCommands {
 
     public static class Limit {
         private static final RedisZSetCommands.Limit UNLIMITED = new RedisZSetCommands.Limit() {
+
+            @Override
             public int getCount() {
                 return -1;
             }
 
+            @Override
             public int getOffset() {
                 return super.getOffset();
             }

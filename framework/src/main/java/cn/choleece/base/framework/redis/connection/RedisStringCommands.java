@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * @author choleece
- * @Description: TODO
+ * @Description: 字符串命令
  * @Date 2019-10-14 22:50
  **/
 public interface RedisStringCommands {

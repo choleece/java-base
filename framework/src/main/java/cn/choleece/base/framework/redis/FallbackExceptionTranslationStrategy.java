@@ -14,6 +14,7 @@ public class FallbackExceptionTranslationStrategy extends PassThroughExceptionTr
         super(converter);
     }
 
+    @Override
     public DataAccessException translate(Exception e) {
         DataAccessException translated = super.translate(e);
         return (DataAccessException)(translated != null ? translated : this.getFallback(e));

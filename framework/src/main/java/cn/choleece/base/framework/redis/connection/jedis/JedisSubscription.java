@@ -1,6 +1,7 @@
 package cn.choleece.base.framework.redis.connection.jedis;
 
 import cn.choleece.base.framework.redis.connection.MessageListener;
+import cn.choleece.base.framework.redis.connection.util.AbstractSubscription;
 import org.springframework.lang.Nullable;
 import redis.clients.jedis.BinaryJedisPubSub;
 
@@ -31,10 +32,12 @@ public class JedisSubscription extends AbstractSubscription {
         }
     }
 
+    @Override
     protected void doPsubscribe(byte[]... patterns) {
         this.jedisPubSub.psubscribe(patterns);
     }
 
+    @Override
     protected void doPUnsubscribe(boolean all, byte[]... patterns) {
         if (all) {
             this.jedisPubSub.punsubscribe();
@@ -43,10 +46,12 @@ public class JedisSubscription extends AbstractSubscription {
         }
     }
 
+    @Override
     protected void doSubscribe(byte[]... channels) {
         this.jedisPubSub.subscribe(channels);
     }
 
+    @Override
     protected void doUnsubscribe(boolean all, byte[]... channels) {
         if (all) {
             this.jedisPubSub.unsubscribe();

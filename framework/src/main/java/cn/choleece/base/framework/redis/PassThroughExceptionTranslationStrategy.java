@@ -17,6 +17,7 @@ public class PassThroughExceptionTranslationStrategy implements ExceptionTransla
         this.converter = converter;
     }
 
+    @Override
     @Nullable
     public DataAccessException translate(Exception e) {
         return (DataAccessException)this.converter.convert(e);

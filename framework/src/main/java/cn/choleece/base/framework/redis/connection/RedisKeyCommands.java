@@ -20,7 +20,7 @@ public interface RedisKeyCommands {
     @Nullable
     default Boolean exists(byte[] key) {
         Assert.notNull(key, "Key must not be null!");
-        Long count = this.exists(key);
+        Long count = this.exists(key, null);
         return count != null ? count > 0L : null;
     }
 

@@ -1,5 +1,9 @@
 package cn.choleece.base.framework.redis.core;
 
+import cn.choleece.base.framework.exception.DataAccessException;
+import cn.choleece.base.framework.redis.connection.RedisConnection;
+import org.springframework.lang.Nullable;
+
 /**
  * @description: TODO
  * @author: sf
@@ -7,7 +11,7 @@ package cn.choleece.base.framework.redis.core;
  */
 public interface RedisCallback<T> {
 
-//    @Nullable
-//    T doInRedis(RedisConnection var1) throws DataAccessException;
+    @Nullable
+    T doInRedis(RedisConnection var1) throws DataAccessException;
 
 }

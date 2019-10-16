@@ -318,6 +318,7 @@ public interface StringRedisConnection extends RedisConnection {
 
     void setClientName(String var1);
 
+    @Override
     List<RedisClientInfo> getClientList();
 
     List<Long> bitfield(String var1, BitFieldSubCommands var2);
