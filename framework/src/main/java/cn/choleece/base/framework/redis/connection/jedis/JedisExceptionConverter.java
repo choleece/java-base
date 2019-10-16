@@ -5,7 +5,7 @@ import cn.choleece.base.framework.exception.InvalidDataAccessApiUsageException;
 import cn.choleece.base.framework.redis.ClusterRedirectException;
 import cn.choleece.base.framework.redis.RedisConnectionFailureException;
 import cn.choleece.base.framework.redis.TooManyClusterRedirectionsException;
-import cn.choleece.base.framework.redis.connection.convert.Converter;
+import org.springframework.core.convert.converter.Converter;
 import redis.clients.jedis.exceptions.*;
 
 import java.io.IOException;

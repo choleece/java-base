@@ -14,14 +14,24 @@ public class FallbackExceptionTranslationStrategy extends PassThroughExceptionTr
         super(converter);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.PassThroughExceptionTranslationStrategy#translate(java.lang.Exception)
+     */
     @Override
     public DataAccessException translate(Exception e) {
+
         DataAccessException translated = super.translate(e);
-        return (DataAccessException)(translated != null ? translated : this.getFallback(e));
+        return translated != null ? translated : getFallback(e);
     }
 
+    /**
+     * Returns a new {@link RedisSystemException} wrapping the given {@link Exception}.
+     *
+     * @param e causing exception.
+     * @return the fallback exception.
+     */
     protected RedisSystemException getFallback(Exception e) {
         return new RedisSystemException("Unknown redis exception", e);
     }
-
 }

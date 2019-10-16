@@ -85,7 +85,7 @@ public abstract class RedisConnectionUtils {
         if (isActualNonReadonlyTransactionActive() && !connHolder.isTransactionSyncronisationActive()) {
             connHolder.setTransactionSyncronisationActive(true);
             RedisConnection conn = connHolder.getConnection();
-            conn.multi();
+//            conn.multi();
             TransactionSynchronizationManager.registerSynchronization(new RedisConnectionUtils.RedisTransactionSynchronizer(connHolder, conn, factory));
         }
 
@@ -264,12 +264,12 @@ public abstract class RedisConnectionUtils {
             try {
                 switch(status) {
                     case 0:
-                        this.connection.exec();
+//                        this.connection.exec();
                         break;
                     case 1:
                     case 2:
                     default:
-                        this.connection.discard();
+//                        this.connection.discard();
                 }
             } finally {
                 if (RedisConnectionUtils.log.isDebugEnabled()) {

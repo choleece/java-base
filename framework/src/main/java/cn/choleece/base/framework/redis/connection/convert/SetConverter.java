@@ -1,5 +1,6 @@
 package cn.choleece.base.framework.redis.connection.convert;
 
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.util.Assert;
 
 import java.util.HashSet;

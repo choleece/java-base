@@ -11,182 +11,270 @@ import org.springframework.util.ObjectUtils;
  **/
 public class RedisNode implements NamedNode {
 
-    @Nullable
-    String id;
-
-    @Nullable
-    String name;
-
-    @Nullable
-    String host;
-
-    @Nullable
+    @Nullable String id;
+    @Nullable String name;
+    @Nullable String host;
     int port;
+    @Nullable NodeType type;
+    @Nullable String masterId;
 
     /**
-     * redis 节点类型 （主节点、从节点）
+     * Creates a new {@link RedisNode} with the given {@code host}, {@code port}.
+     *
+     * @param host must not be {@literal null}
+     * @param port
      */
-    @Nullable
-    RedisNode.NodeType type;
+    public RedisNode(String host, int port) {
 
-    @Nullable
-    String masterId;
-
-    public RedisNode(@Nullable String host, int port) {
-        Assert.notNull(host, "host must not be null");
+        Assert.notNull(host, "host must not be null!");
 
         this.host = host;
         this.port = port;
     }
 
-    protected RedisNode() {
-    }
+    protected RedisNode() {}
 
+    /**
+     * @return can be {@literal null}.
+     */
     @Nullable
     public String getHost() {
         return host;
     }
 
-    public int getPort() {
+    /**
+     * @return can be {@literal null}.
+     */
+    @Nullable
+    public Integer getPort() {
         return port;
     }
 
-    /**
-     * 格式化服务器地址
-     * @return
-     */
     public String asString() {
-        return this.host + ":" + this.port;
-    }
-
-    @Nullable
-    public String getId() {
-        return id;
-    }
-
-    public void setId(@Nullable String id) {
-        this.id = id;
+        return host + ":" + port;
     }
 
     @Override
     @Nullable
     public String getName() {
-        return name;
+        return this.name;
     }
 
-    public void setName(@Nullable String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * @return can be {@literal null}.
+     * @since 1.7
+     */
     @Nullable
     public String getMasterId() {
         return masterId;
     }
 
+    /**
+     * @return can be {@literal null}.
+     * @since 1.7
+     */
     @Nullable
-    public RedisNode.NodeType getType() {
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id
+     * @since 1.7
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return can be {@literal null}.
+     * @since 1.7
+     */
+    @Nullable
+    public NodeType getType() {
         return type;
     }
 
     /**
-     * 是否为主节点
      * @return
+     * @since 1.7
      */
     public boolean isMaster() {
-        return ObjectUtils.nullSafeEquals(NodeType.MASTER, this.getType());
+        return ObjectUtils.nullSafeEquals(NodeType.MASTER, getType());
     }
 
+    /**
+     * @return
+     * @since 1.7
+     */
     public boolean isSlave() {
-        return this.isReplica();
+        return isReplica();
     }
 
-    public static RedisNode.RedisNodeBuilder newRedisNode() {
-        return new RedisNode.RedisNodeBuilder();
-    }
-
+    /**
+     * @return
+     * @since 2.1
+     */
     public boolean isReplica() {
-        return ObjectUtils.nullSafeEquals(NodeType.SLAVE, this.getType());
+        return ObjectUtils.nullSafeEquals(NodeType.SLAVE, getType());
+    }
+
+    /**
+     * Get {@link RedisNodeBuilder} for creating new {@link RedisNode}.
+     *
+     * @return never {@literal null}.
+     * @since 1.7
+     */
+    public static RedisNodeBuilder newRedisNode() {
+        return new RedisNodeBuilder();
     }
 
     @Override
     public String toString() {
-        return this.asString();
+        return asString();
     }
 
     @Override
     public int hashCode() {
+        final int prime = 31;
         int result = 1;
-        result = 31 * result + ObjectUtils.nullSafeHashCode(this.host);
-        result = 31 * result + ObjectUtils.nullSafeHashCode(this.port);
+        result = prime * result + ObjectUtils.nullSafeHashCode(host);
+        result = prime * result + ObjectUtils.nullSafeHashCode(port);
         return result;
     }
 
     @Override
     public boolean equals(Object obj) {
+
         if (this == obj) {
             return true;
-        } else if (obj != null && obj instanceof RedisNode) {
-            RedisNode other = (RedisNode)obj;
-            if (!ObjectUtils.nullSafeEquals(this.host, other.host)) {
-                return false;
-            } else if (!ObjectUtils.nullSafeEquals(this.port, other.port)) {
-                return false;
-            } else {
-                return ObjectUtils.nullSafeEquals(this.name, other.name);
-            }
-        } else {
+        }
+        if (obj == null || !(obj instanceof RedisNode)) {
             return false;
         }
+
+        RedisNode other = (RedisNode) obj;
+
+        if (!ObjectUtils.nullSafeEquals(this.host, other.host)) {
+            return false;
+        }
+
+        if (!ObjectUtils.nullSafeEquals(this.port, other.port)) {
+            return false;
+        }
+
+        if (!ObjectUtils.nullSafeEquals(this.name, other.name)) {
+            return false;
+        }
+
+        return true;
     }
 
+    /**
+     * @author Christoph Strobl
+     * @since 1.7
+     */
+    public enum NodeType {
+        MASTER, SLAVE
+    }
+
+    /**
+     * Builder for creating new {@link RedisNode}.
+     *
+     * @author Christoph Strobl
+     * @since 1.4
+     */
     public static class RedisNodeBuilder {
 
-        private RedisNode node = new RedisNode();
+        private RedisNode node;
 
         public RedisNodeBuilder() {
+            node = new RedisNode();
         }
 
-        public RedisNode.RedisNodeBuilder withName(String name) {
-            this.node.name = name;
+        /**
+         * Define node name.
+         */
+        public RedisNodeBuilder withName(String name) {
+            node.name = name;
             return this;
         }
 
-        public RedisNode.RedisNodeBuilder listeningAt(String host, int port) {
+        /**
+         * Set host and port of server.
+         *
+         * @param host must not be {@literal null}.
+         * @param port
+         * @return
+         */
+        public RedisNodeBuilder listeningAt(String host, int port) {
+
             Assert.hasText(host, "Hostname must not be empty or null.");
-            this.node.host = host;
-            this.node.port = port;
+            node.host = host;
+            node.port = port;
             return this;
         }
 
-        public RedisNode.RedisNodeBuilder withId(String id) {
-            this.node.id = id;
+        /**
+         * Set id of server.
+         *
+         * @param id
+         * @return
+         */
+        public RedisNodeBuilder withId(String id) {
+
+            node.id = id;
             return this;
         }
 
-        public RedisNode.RedisNodeBuilder promotedAs(RedisNode.NodeType type) {
-            this.node.type = type;
+        /**
+         * Set server role.
+         *
+         * @param type
+         * @return
+         * @since 1.7
+         */
+        public RedisNodeBuilder promotedAs(NodeType type) {
+
+            node.type = type;
             return this;
         }
 
-        public RedisNode.RedisNodeBuilder slaveOf(String masterId) {
-            return this.replicaOf(masterId);
+        /**
+         * Set the id of the master node.
+         *
+         * @param masterId
+         * @return
+         * @since 1.7
+         */
+        public RedisNodeBuilder slaveOf(String masterId) {
+            return replicaOf(masterId);
         }
 
-        public RedisNode.RedisNodeBuilder replicaOf(String masterId) {
-            this.node.masterId = masterId;
+        /**
+         * Set the id of the master node.
+         *
+         * @param masterId
+         * @return this.
+         * @since 2.1
+         */
+        public RedisNodeBuilder replicaOf(String masterId) {
+
+            node.masterId = masterId;
             return this;
         }
 
+        /**
+         * Get the {@link RedisNode}.
+         *
+         * @return
+         */
         public RedisNode build() {
             return this.node;
-        }
-    }
-
-    public enum NodeType {
-        MASTER,
-        SLAVE;
-
-        private NodeType() {
         }
     }
 }

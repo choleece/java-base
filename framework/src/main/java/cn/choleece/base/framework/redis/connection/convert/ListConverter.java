@@ -1,5 +1,7 @@
 package cn.choleece.base.framework.redis.connection.convert;
 
+import org.springframework.core.convert.converter.Converter;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;

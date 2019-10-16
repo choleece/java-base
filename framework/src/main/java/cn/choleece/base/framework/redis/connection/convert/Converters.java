@@ -2,6 +2,8 @@ package cn.choleece.base.framework.redis.connection.convert;
 
 import cn.choleece.base.framework.redis.connection.DataType;
 import cn.choleece.base.framework.redis.connection.RedisClusterNode;
+import cn.choleece.base.framework.redis.connection.RedisNode;
+import cn.choleece.base.framework.redis.connection.RedisZSetCommands;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.Nullable;
 import org.springframework.util.*;
@@ -112,12 +114,12 @@ public abstract class Converters {
         }
     }
 
-    public static List<Object> toObjects(Set<Tuple> tuples) {
+    public static List<Object> toObjects(Set<RedisZSetCommands.Tuple> tuples) {
         List<Object> tupleArgs = new ArrayList(tuples.size() * 2);
         Iterator var2 = tuples.iterator();
 
         while(var2.hasNext()) {
-            Tuple tuple = (Tuple)var2.next();
+            RedisZSetCommands.Tuple tuple = (RedisZSetCommands.Tuple)var2.next();
             tupleArgs.add(tuple.getScore());
             tupleArgs.add(tuple.getValue());
         }
@@ -151,13 +153,13 @@ public abstract class Converters {
         };
     }
 
-    public static <V> Converter<GeoResults<GeoLocation<byte[]>>, GeoResults<GeoLocation<V>>> deserializingGeoResultsConverter(RedisSerializer<V> serializer) {
-        return new Converters.DeserializingGeoResultsConverter(serializer);
-    }
+//    public static <V> Converter<GeoResults<GeoLocation<byte[]>>, GeoResults<GeoLocation<V>>> deserializingGeoResultsConverter(RedisSerializer<V> serializer) {
+//        return new Converters.DeserializingGeoResultsConverter(serializer);
+//    }
 
-    public static Converter<Double, Distance> distanceConverterForMetric(Metric metric) {
-        return Converters.DistanceConverterFactory.INSTANCE.forMetric(metric);
-    }
+//    public static Converter<Double, Distance> distanceConverterForMetric(Metric metric) {
+//        return Converters.DistanceConverterFactory.INSTANCE.forMetric(metric);
+//    }
 
     public static Properties toProperties(List<String> input) {
         return (Properties)STRING_LIST_TO_PROPERTIES_CONVERTER.convert(input);
@@ -167,7 +169,7 @@ public abstract class Converters {
         return STRING_LIST_TO_PROPERTIES_CONVERTER;
     }
 
-    public static <K, V> Converter<Map<K, V>, Properties> mapToPropertiesConverter() {
+    public static <K, V> Converter<Map<?, ?>, Properties> mapToPropertiesConverter() {
         return MAP_TO_PROPERTIES;
     }
 
@@ -206,7 +208,7 @@ public abstract class Converters {
                     portPart = portPart.substring(0, portPart.indexOf(64));
                 }
 
-                RedisClusterNode.RedisClusterNodeBuilder nodeBuilder = RedisClusterNode.newRedisClusterNode().listeningAt(hostAndPort[0], Integer.valueOf(portPart)).withId(args[0]).promotedAs(flags.contains(Flag.MASTER) ? NodeType.MASTER : NodeType.SLAVE).serving(range).withFlags(flags).linkState(this.parseLinkState(args));
+                RedisClusterNode.RedisClusterNodeBuilder nodeBuilder = RedisClusterNode.newRedisClusterNode().listeningAt(hostAndPort[0], Integer.valueOf(portPart)).withId(args[0]).promotedAs(flags.contains(RedisClusterNode.Flag.MASTER) ? RedisNode.NodeType.MASTER : RedisNode.NodeType.SLAVE).serving(range).withFlags(flags).linkState(this.parseLinkState(args));
                 if (!args[3].isEmpty() && !args[3].startsWith("-")) {
                     nodeBuilder.slaveOf(args[3]);
                 }
@@ -232,7 +234,7 @@ public abstract class Converters {
 
             private RedisClusterNode.LinkState parseLinkState(String[] args) {
                 String raw = args[7];
-                return StringUtils.hasText(raw) ? RedisClusterNode.LinkState.valueOf(raw.toUpperCase()) : LinkState.DISCONNECTED;
+                return StringUtils.hasText(raw) ? RedisClusterNode.LinkState.valueOf(raw.toUpperCase()) : RedisClusterNode.LinkState.DISCONNECTED;
             }
 
             private RedisClusterNode.SlotRange parseSlotRange(String[] args) {
@@ -273,25 +275,25 @@ public abstract class Converters {
         };
     }
 
-    static class DeserializingGeoResultsConverter<V> implements Converter<GeoResults<GeoLocation<byte[]>>, GeoResults<GeoLocation<V>>> {
-        final RedisSerializer<V> serializer;
-
-        public GeoResults<GeoLocation<V>> convert(GeoResults<GeoLocation<byte[]>> source) {
-            List<GeoResult<GeoLocation<V>>> values = new ArrayList(source.getContent().size());
-            Iterator var3 = source.getContent().iterator();
-
-            while(var3.hasNext()) {
-                GeoResult<GeoLocation<byte[]>> value = (GeoResult)var3.next();
-                values.add(new GeoResult(new GeoLocation(this.serializer.deserialize((byte[])((GeoLocation)value.getContent()).getName()), ((GeoLocation)value.getContent()).getPoint()), value.getDistance()));
-            }
-
-            return new GeoResults(values, source.getAverageDistance().getMetric());
-        }
-
-        public DeserializingGeoResultsConverter(RedisSerializer<V> serializer) {
-            this.serializer = serializer;
-        }
-    }
+//    static class DeserializingGeoResultsConverter<V> implements Converter<GeoResults<GeoLocation<byte[]>>, GeoResults<GeoLocation<V>>> {
+//        final RedisSerializer<V> serializer;
+//
+//        public GeoResults<GeoLocation<V>> convert(GeoResults<GeoLocation<byte[]>> source) {
+//            List<GeoResult<GeoLocation<V>>> values = new ArrayList(source.getContent().size());
+//            Iterator var3 = source.getContent().iterator();
+//
+//            while(var3.hasNext()) {
+//                GeoResult<GeoLocation<byte[]>> value = (GeoResult)var3.next();
+//                values.add(new GeoResult(new GeoLocation(this.serializer.deserialize((byte[])((GeoLocation)value.getContent()).getName()), ((GeoLocation)value.getContent()).getPoint()), value.getDistance()));
+//            }
+//
+//            return new GeoResults(values, source.getAverageDistance().getMetric());
+//        }
+//
+//        public DeserializingGeoResultsConverter(RedisSerializer<V> serializer) {
+//            this.serializer = serializer;
+//        }
+//    }
 
     enum DistanceConverterFactory {
         INSTANCE;
@@ -299,20 +301,20 @@ public abstract class Converters {
         private DistanceConverterFactory() {
         }
 
-        Converters.DistanceConverterFactory.DistanceConverter forMetric(@Nullable Metric metric) {
-            return new Converters.DistanceConverterFactory.DistanceConverter((Metric)(metric != null && !ObjectUtils.nullSafeEquals(Metrics.NEUTRAL, metric) ? metric : DistanceUnit.METERS));
-        }
-
-        static class DistanceConverter implements Converter<Double, Distance> {
-            private Metric metric;
-
-            DistanceConverter(@Nullable Metric metric) {
-                this.metric = (Metric)(metric != null && !ObjectUtils.nullSafeEquals(Metrics.NEUTRAL, metric) ? metric : DistanceUnit.METERS);
-            }
-
-            public Distance convert(Double source) {
-                return new Distance(source, this.metric);
-            }
-        }
+//        Converters.DistanceConverterFactory.DistanceConverter forMetric(@Nullable Metric metric) {
+//            return new Converters.DistanceConverterFactory.DistanceConverter((Metric)(metric != null && !ObjectUtils.nullSafeEquals(Metrics.NEUTRAL, metric) ? metric : DistanceUnit.METERS));
+//        }
+//
+//        static class DistanceConverter implements Converter<Double, Distance> {
+//            private Metric metric;
+//
+//            DistanceConverter(@Nullable Metric metric) {
+//                this.metric = (Metric)(metric != null && !ObjectUtils.nullSafeEquals(Metrics.NEUTRAL, metric) ? metric : DistanceUnit.METERS);
+//            }
+//
+//            public Distance convert(Double source) {
+//                return new Distance(source, this.metric);
+//            }
+//        }
     }
 }

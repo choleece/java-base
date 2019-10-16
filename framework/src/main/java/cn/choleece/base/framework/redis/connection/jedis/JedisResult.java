@@ -17,78 +17,128 @@ public class JedisResult<T, R> extends FutureResult<Response<?>> {
     private final boolean convertPipelineAndTxResults;
 
     JedisResult(Response<T> resultHolder) {
-        this(resultHolder, false, (Converter)null);
+        this(resultHolder, false, null);
     }
 
     JedisResult(Response<T> resultHolder, boolean convertPipelineAndTxResults, @Nullable Converter<T, ?> converter) {
-        this(resultHolder, () -> {
-            return null;
-        }, convertPipelineAndTxResults, converter);
+        this(resultHolder, () -> null, convertPipelineAndTxResults, converter);
     }
 
-    JedisResult(Response<T> resultHolder, Supplier<R> defaultReturnValue, boolean convertPipelineAndTxResults, @Nullable Converter<T, ?> converter) {
+    JedisResult(Response<T> resultHolder, Supplier<R> defaultReturnValue, boolean convertPipelineAndTxResults,
+                @Nullable Converter<T, ?> converter) {
+
         super(resultHolder, converter, defaultReturnValue);
         this.convertPipelineAndTxResults = convertPipelineAndTxResults;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.FutureResult#get()
+     * @return
+     */
     @Nullable
     @Override
+    @SuppressWarnings("unchecked")
     public T get() {
-        return ((Response)this.getResultHolder()).get();
+        return (T) getResultHolder().get();
     }
 
-    @Override
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.FutureResult#conversionRequired()
+     */
     public boolean conversionRequired() {
-        return this.convertPipelineAndTxResults;
+        return convertPipelineAndTxResults;
     }
 
+    /**
+     * Jedis specific {@link FutureResult} implementation of a throw away status result.
+     */
+    static class JedisStatusResult<T, R> extends JedisResult<T, R> {
+
+        @SuppressWarnings("unchecked")
+        JedisStatusResult(Response<T> resultHolder, Converter<T, R> converter) {
+
+            super(resultHolder, false, converter);
+            setStatus(true);
+        }
+    }
+
+    /**
+     * Builder for constructing {@link JedisResult}.
+     *
+     * @param <T>
+     * @param <R>
+     * @since 2.1
+     */
     static class JedisResultBuilder<T, R> {
+
         private final Response<T> response;
         private Converter<T, R> converter;
         private boolean convertPipelineAndTxResults = false;
-        private Supplier<R> nullValueDefault = () -> {
-            return null;
-        };
+        private Supplier<R> nullValueDefault = () -> null;
 
+        @SuppressWarnings("unchecked")
         JedisResultBuilder(Response<T> response) {
+
             this.response = response;
-            this.converter = (source) -> {
-                return source;
-            };
+            this.converter = (source) -> (R) source;
         }
 
-        static <T, R> JedisResult.JedisResultBuilder<T, R> forResponse(Response<T> response) {
-            return new JedisResult.JedisResultBuilder(response);
+        /**
+         * Create a new {@link JedisResultBuilder} given {@link Response}.
+         *
+         * @param response must not be {@literal null}.
+         * @param <T> native response type.
+         * @param <R> resulting response type.
+         * @return the new {@link JedisResultBuilder}.
+         */
+        static <T, R> JedisResultBuilder<T, R> forResponse(Response<T> response) {
+            return new JedisResultBuilder<>(response);
         }
 
-        JedisResult.JedisResultBuilder<T, R> mappedWith(Converter<T, R> converter) {
+        /**
+         * Configure a {@link Converter} to convert between {@code T} and {@code R} types.
+         *
+         * @param converter must not be {@literal null}.
+         * @return {@code this} builder.
+         */
+        JedisResultBuilder<T, R> mappedWith(Converter<T, R> converter) {
+
             this.converter = converter;
             return this;
         }
 
-        JedisResult.JedisResultBuilder<T, R> mapNullTo(Supplier<R> supplier) {
+        /**
+         * Configure a {@link Supplier} to map {@literal null} responses to a different value.
+         *
+         * @param supplier must not be {@literal null}.
+         * @return {@code this} builder.
+         */
+        JedisResultBuilder<T, R> mapNullTo(Supplier<R> supplier) {
+
             this.nullValueDefault = supplier;
             return this;
         }
 
-        JedisResult.JedisResultBuilder<T, R> convertPipelineAndTxResults(boolean flag) {
-            this.convertPipelineAndTxResults = flag;
+        JedisResultBuilder<T, R> convertPipelineAndTxResults(boolean flag) {
+
+            convertPipelineAndTxResults = flag;
             return this;
         }
 
+        /**
+         * @return a new {@link JedisResult} wrapper with configuration applied from this builder.
+         */
         JedisResult<T, R> build() {
-            return new JedisResult(this.response, this.nullValueDefault, this.convertPipelineAndTxResults, this.converter);
+            return new JedisResult<>(response, nullValueDefault, convertPipelineAndTxResults, converter);
         }
 
-        JedisResult.JedisStatusResult buildStatusResult() {
-            return new JedisResult.JedisStatusResult(this.response, this.converter);
-        }
-    }
-
-    static class JedisStatusResult<T, R> extends JedisResult<T, R> {
-        JedisStatusResult(Response<T> resultHolder, Converter<T, R> converter) {
-            super(resultHolder, false, converter);
-            this.setStatus(true);
+        /**
+         * @return a new {@link JedisStatusResult} wrapper for status results with configuration applied from this builder.
+         */
+        JedisStatusResult buildStatusResult() {
+            return new JedisStatusResult<>(response, converter);
         }
     }
 }

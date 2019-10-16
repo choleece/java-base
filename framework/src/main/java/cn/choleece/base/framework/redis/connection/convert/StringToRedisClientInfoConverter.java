@@ -1,6 +1,7 @@
 package cn.choleece.base.framework.redis.connection.convert;
 
 import cn.choleece.base.framework.redis.core.types.RedisClientInfo;
+import org.springframework.core.convert.converter.Converter;
 
 import java.util.ArrayList;
 import java.util.List;

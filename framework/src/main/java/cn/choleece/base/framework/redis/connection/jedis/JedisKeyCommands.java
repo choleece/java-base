@@ -6,12 +6,14 @@ import cn.choleece.base.framework.redis.connection.SortParameters;
 import cn.choleece.base.framework.redis.connection.ValueEncoding;
 import cn.choleece.base.framework.redis.connection.convert.Converters;
 import cn.choleece.base.framework.redis.core.Cursor;
+import cn.choleece.base.framework.redis.core.ScanCursor;
+import cn.choleece.base.framework.redis.core.ScanIteration;
 import cn.choleece.base.framework.redis.core.ScanOptions;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import redis.clients.jedis.ScanParams;
-import redis.clients.jedis.ScanResult;
 import redis.clients.jedis.SortingParams;
 
 import java.time.Duration;
@@ -24,581 +26,769 @@ import java.util.concurrent.TimeUnit;
  * @Description: TODO
  * @Date 2019-10-15 20:59
  **/
-public class JedisKeyCommands implements RedisKeyCommands {
+@RequiredArgsConstructor
+class JedisKeyCommands implements RedisKeyCommands {
 
-    @NonNull
-    private final JedisConnection connection;
+    private final @NonNull JedisConnection connection;
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#exists(byte[])
+     */
     @Override
     public Boolean exists(byte[] key) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().exists(key)));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().exists(key)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().exists(key)));
-                return null;
-            } else {
-                return this.connection.getJedis().exists(key);
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().exists(key)));
+                return null;
+            }
+            return connection.getJedis().exists(key);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
-    @Override
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#exists(byte[][])
+     */
     @Nullable
+    @Override
     public Long exists(byte[]... keys) {
+
         Assert.notNull(keys, "Keys must not be null!");
         Assert.noNullElements(keys, "Keys must not contain null elements!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().exists(keys)));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().exists(keys)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().exists(keys)));
-                return null;
-            } else {
-                return this.connection.getJedis().exists(keys);
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().exists(keys)));
+                return null;
+            }
+            return connection.getJedis().exists(keys);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#del(byte[][])
+     */
     @Override
     public Long del(byte[]... keys) {
+
         Assert.noNullElements(keys, "Keys must not be null!");
         Assert.noNullElements(keys, "Keys must not contain null elements!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().del(keys)));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().del(keys)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().del(keys)));
-                return null;
-            } else {
-                return this.connection.getJedis().del(keys);
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().del(keys)));
+                return null;
+            }
+            return connection.getJedis().del(keys);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
-    @Override
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#unlink(byte[][])
+     */
     @Nullable
+    @Override
     public Long unlink(byte[]... keys) {
+
         Assert.notNull(keys, "Keys must not be null!");
-        return (Long)Long.class.cast(this.connection.execute("UNLINK", keys));
+
+        return Long.class.cast(connection.execute("UNLINK", keys));
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#type(byte[])
+     */
     @Override
     public DataType type(byte[] key) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().type(key), JedisConverters.stringToDataType()));
+            if (isPipelined()) {
+                pipeline(
+                        connection.newJedisResult(connection.getRequiredPipeline().type(key), JedisConverters.stringToDataType()));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().type(key), JedisConverters.stringToDataType()));
-                return null;
-            } else {
-                return JedisConverters.toDataType(this.connection.getJedis().type(key));
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().type(key),
+                        JedisConverters.stringToDataType()));
+                return null;
+            }
+            return JedisConverters.toDataType(connection.getJedis().type(key));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
-    @Override
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#touch(byte[][])
+     */
     @Nullable
+    @Override
     public Long touch(byte[]... keys) {
+
         Assert.notNull(keys, "Keys must not be null!");
-        return (Long)Long.class.cast(this.connection.execute("TOUCH", keys));
+
+        return Long.class.cast(connection.execute("TOUCH", keys));
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#keys(byte[])
+     */
     @Override
     public Set<byte[]> keys(byte[] pattern) {
+
         Assert.notNull(pattern, "Pattern must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().keys(pattern)));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().keys(pattern)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().keys(pattern)));
-                return null;
-            } else {
-                return this.connection.getJedis().keys(pattern);
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().keys(pattern)));
+                return null;
+            }
+            return connection.getJedis().keys(pattern);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#scan(org.springframework.data.redis.core.ScanOptions)
+     */
     @Override
     public Cursor<byte[]> scan(ScanOptions options) {
-        return this.scan(0L, options != null ? options : ScanOptions.NONE);
+        return scan(0, options != null ? options : ScanOptions.NONE);
     }
 
+    /**
+     * @since 1.4
+     * @param cursorId
+     * @param options
+     * @return
+     */
     public Cursor<byte[]> scan(long cursorId, ScanOptions options) {
-        return (new ScanCursor<byte[]>(cursorId, options) {
+
+        return new ScanCursor<byte[]>(cursorId, options) {
+
+            @Override
             protected ScanIteration<byte[]> doScan(long cursorId, ScanOptions options) {
-                if (!JedisKeyCommands.this.isQueueing() && !JedisKeyCommands.this.isPipelined()) {
-                    ScanParams params = JedisConverters.toScanParams(options);
-                    ScanResult<String> result = JedisKeyCommands.this.connection.getJedis().scan(Long.toString(cursorId), params);
-                    return new ScanIteration(Long.valueOf(result.getStringCursor()), JedisConverters.stringListToByteList().convert(result.getResult()));
-                } else {
+
+                if (isQueueing() || isPipelined()) {
                     throw new UnsupportedOperationException("'SCAN' cannot be called in pipeline / transaction mode.");
                 }
+
+                ScanParams params = JedisConverters.toScanParams(options);
+                redis.clients.jedis.ScanResult<String> result = connection.getJedis().scan(Long.toString(cursorId), params);
+                return new ScanIteration<>(Long.valueOf(result.getStringCursor()),
+                        JedisConverters.stringListToByteList().convert(result.getResult()));
             }
 
             protected void doClose() {
                 JedisKeyCommands.this.connection.close();
-            }
-        }).open();
+            };
+
+        }.open();
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#randomKey()
+     */
     @Override
     public byte[] randomKey() {
+
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().randomKeyBinary()));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().randomKeyBinary()));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().randomKeyBinary()));
-                return null;
-            } else {
-                return this.connection.getJedis().randomBinaryKey();
             }
-        } catch (Exception var2) {
-            throw this.connection.convertJedisAccessException(var2);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().randomKeyBinary()));
+                return null;
+            }
+            return connection.getJedis().randomBinaryKey();
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#rename(byte[], byte[])
+     */
     @Override
     public void rename(byte[] sourceKey, byte[] targetKey) {
+
         Assert.notNull(sourceKey, "Source key must not be null!");
         Assert.notNull(targetKey, "Target key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newStatusResult(this.connection.getRequiredPipeline().rename(sourceKey, targetKey)));
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newStatusResult(this.connection.getRequiredTransaction().rename(sourceKey, targetKey)));
-            } else {
-                this.connection.getJedis().rename(sourceKey, targetKey);
+            if (isPipelined()) {
+                pipeline(connection.newStatusResult(connection.getRequiredPipeline().rename(sourceKey, targetKey)));
+                return;
             }
-        } catch (Exception var4) {
-            throw this.connection.convertJedisAccessException(var4);
+            if (isQueueing()) {
+                transaction(connection.newStatusResult(connection.getRequiredTransaction().rename(sourceKey, targetKey)));
+                return;
+            }
+            connection.getJedis().rename(sourceKey, targetKey);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#renameNX(byte[], byte[])
+     */
     @Override
     public Boolean renameNX(byte[] sourceKey, byte[] targetKey) {
+
         Assert.notNull(sourceKey, "Source key must not be null!");
         Assert.notNull(targetKey, "Target key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().renamenx(sourceKey, targetKey), JedisConverters.longToBoolean()));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().renamenx(sourceKey, targetKey),
+                        JedisConverters.longToBoolean()));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().renamenx(sourceKey, targetKey), JedisConverters.longToBoolean()));
-                return null;
-            } else {
-                return JedisConverters.toBoolean(this.connection.getJedis().renamenx(sourceKey, targetKey));
             }
-        } catch (Exception var4) {
-            throw this.connection.convertJedisAccessException(var4);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().renamenx(sourceKey, targetKey),
+                        JedisConverters.longToBoolean()));
+                return null;
+            }
+            return JedisConverters.toBoolean(connection.getJedis().renamenx(sourceKey, targetKey));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#expire(byte[], long)
+     */
     @Override
     public Boolean expire(byte[] key, long seconds) {
+
         Assert.notNull(key, "Key must not be null!");
-        if (seconds > 2147483647L) {
-            return this.pExpire(key, TimeUnit.SECONDS.toMillis(seconds));
-        } else {
-            try {
-                if (this.isPipelined()) {
-                    this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().expire(key, (int)seconds), JedisConverters.longToBoolean()));
-                    return null;
-                } else if (this.isQueueing()) {
-                    this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().expire(key, (int)seconds), JedisConverters.longToBoolean()));
-                    return null;
-                } else {
-                    return JedisConverters.toBoolean(this.connection.getJedis().expire(key, (int)seconds));
-                }
-            } catch (Exception var5) {
-                throw this.connection.convertJedisAccessException(var5);
+
+        if (seconds > Integer.MAX_VALUE) {
+            return pExpire(key, TimeUnit.SECONDS.toMillis(seconds));
+        }
+
+        try {
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().expire(key, (int) seconds),
+                        JedisConverters.longToBoolean()));
+                return null;
             }
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().expire(key, (int) seconds),
+                        JedisConverters.longToBoolean()));
+                return null;
+            }
+            return JedisConverters.toBoolean(connection.getJedis().expire(key, (int) seconds));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#pExpire(byte[], long)
+     */
     @Override
     public Boolean pExpire(byte[] key, long millis) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().pexpire(key, millis), JedisConverters.longToBoolean()));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().pexpire(key, millis),
+                        JedisConverters.longToBoolean()));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().pexpire(key, millis), JedisConverters.longToBoolean()));
-                return null;
-            } else {
-                return JedisConverters.toBoolean(this.connection.getJedis().pexpire(key, millis));
             }
-        } catch (Exception var5) {
-            throw this.connection.convertJedisAccessException(var5);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().pexpire(key, millis),
+                        JedisConverters.longToBoolean()));
+                return null;
+            }
+            return JedisConverters.toBoolean(connection.getJedis().pexpire(key, millis));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#expireAt(byte[], long)
+     */
     @Override
     public Boolean expireAt(byte[] key, long unixTime) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().expireAt(key, unixTime), JedisConverters.longToBoolean()));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().expireAt(key, unixTime),
+                        JedisConverters.longToBoolean()));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().expireAt(key, unixTime), JedisConverters.longToBoolean()));
-                return null;
-            } else {
-                return JedisConverters.toBoolean(this.connection.getJedis().expireAt(key, unixTime));
             }
-        } catch (Exception var5) {
-            throw this.connection.convertJedisAccessException(var5);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().expireAt(key, unixTime),
+                        JedisConverters.longToBoolean()));
+                return null;
+            }
+            return JedisConverters.toBoolean(connection.getJedis().expireAt(key, unixTime));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#pExpireAt(byte[], long)
+     */
     @Override
     public Boolean pExpireAt(byte[] key, long unixTimeInMillis) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().pexpireAt(key, unixTimeInMillis), JedisConverters.longToBoolean()));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().pexpireAt(key, unixTimeInMillis),
+                        JedisConverters.longToBoolean()));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().pexpireAt(key, unixTimeInMillis), JedisConverters.longToBoolean()));
-                return null;
-            } else {
-                return JedisConverters.toBoolean(this.connection.getJedis().pexpireAt(key, unixTimeInMillis));
             }
-        } catch (Exception var5) {
-            throw this.connection.convertJedisAccessException(var5);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().pexpireAt(key, unixTimeInMillis),
+                        JedisConverters.longToBoolean()));
+                return null;
+            }
+            return JedisConverters.toBoolean(connection.getJedis().pexpireAt(key, unixTimeInMillis));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#persist(byte[])
+     */
     @Override
     public Boolean persist(byte[] key) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().persist(key), JedisConverters.longToBoolean()));
+            if (isPipelined()) {
+                pipeline(
+                        connection.newJedisResult(connection.getRequiredPipeline().persist(key), JedisConverters.longToBoolean()));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().persist(key), JedisConverters.longToBoolean()));
-                return null;
-            } else {
-                return JedisConverters.toBoolean(this.connection.getJedis().persist(key));
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().persist(key),
+                        JedisConverters.longToBoolean()));
+                return null;
+            }
+            return JedisConverters.toBoolean(connection.getJedis().persist(key));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#move(byte[], int)
+     */
     @Override
     public Boolean move(byte[] key, int dbIndex) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().move(key, dbIndex), JedisConverters.longToBoolean()));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().move(key, dbIndex),
+                        JedisConverters.longToBoolean()));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().move(key, dbIndex), JedisConverters.longToBoolean()));
-                return null;
-            } else {
-                return JedisConverters.toBoolean(this.connection.getJedis().move(key, dbIndex));
             }
-        } catch (Exception var4) {
-            throw this.connection.convertJedisAccessException(var4);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().move(key, dbIndex),
+                        JedisConverters.longToBoolean()));
+                return null;
+            }
+            return JedisConverters.toBoolean(connection.getJedis().move(key, dbIndex));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#ttl(byte[])
+     */
     @Override
     public Long ttl(byte[] key) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().ttl(key)));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().ttl(key)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().ttl(key)));
-                return null;
-            } else {
-                return this.connection.getJedis().ttl(key);
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().ttl(key)));
+                return null;
+            }
+
+            return connection.getJedis().ttl(key);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#ttl(byte[], java.util.concurrent.TimeUnit)
+     */
     @Override
     public Long ttl(byte[] key, TimeUnit timeUnit) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().ttl(key), Converters.secondsToTimeUnit(timeUnit)));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().ttl(key),
+                        Converters.secondsToTimeUnit(timeUnit)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().ttl(key), Converters.secondsToTimeUnit(timeUnit)));
-                return null;
-            } else {
-                return Converters.secondsToTimeUnit(this.connection.getJedis().ttl(key), timeUnit);
             }
-        } catch (Exception var4) {
-            throw this.connection.convertJedisAccessException(var4);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().ttl(key),
+                        Converters.secondsToTimeUnit(timeUnit)));
+                return null;
+            }
+
+            return Converters.secondsToTimeUnit(connection.getJedis().ttl(key), timeUnit);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#pTtl(byte[])
+     */
     @Override
     public Long pTtl(byte[] key) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().pttl(key)));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().pttl(key)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().pttl(key)));
-                return null;
-            } else {
-                return this.connection.getJedis().pttl(key);
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().pttl(key)));
+                return null;
+            }
+
+            return connection.getJedis().pttl(key);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#pTtl(byte[], java.util.concurrent.TimeUnit)
+     */
     @Override
     public Long pTtl(byte[] key, TimeUnit timeUnit) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().pttl(key), Converters.millisecondsToTimeUnit(timeUnit)));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().pttl(key),
+                        Converters.millisecondsToTimeUnit(timeUnit)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().pttl(key), Converters.millisecondsToTimeUnit(timeUnit)));
-                return null;
-            } else {
-                return Converters.millisecondsToTimeUnit(this.connection.getJedis().pttl(key), timeUnit);
             }
-        } catch (Exception var4) {
-            throw this.connection.convertJedisAccessException(var4);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().pttl(key),
+                        Converters.millisecondsToTimeUnit(timeUnit)));
+                return null;
+            }
+
+            return Converters.millisecondsToTimeUnit(connection.getJedis().pttl(key), timeUnit);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#sort(byte[], org.springframework.data.redis.connection.SortParameters)
+     */
     @Override
     public List<byte[]> sort(byte[] key, SortParameters params) {
+
         Assert.notNull(key, "Key must not be null!");
+
         SortingParams sortParams = JedisConverters.toSortingParams(params);
 
         try {
-            if (this.isPipelined()) {
+            if (isPipelined()) {
                 if (sortParams != null) {
-                    this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().sort(key, sortParams)));
+                    pipeline(connection.newJedisResult(connection.getRequiredPipeline().sort(key, sortParams)));
                 } else {
-                    this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().sort(key)));
+                    pipeline(connection.newJedisResult(connection.getRequiredPipeline().sort(key)));
                 }
 
                 return null;
-            } else if (this.isQueueing()) {
-                if (sortParams != null) {
-                    this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().sort(key, sortParams)));
-                } else {
-                    this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().sort(key)));
-                }
-
-                return null;
-            } else {
-                return sortParams != null ? this.connection.getJedis().sort(key, sortParams) : this.connection.getJedis().sort(key);
             }
-        } catch (Exception var5) {
-            throw this.connection.convertJedisAccessException(var5);
+            if (isQueueing()) {
+                if (sortParams != null) {
+                    transaction(connection.newJedisResult(connection.getRequiredTransaction().sort(key, sortParams)));
+                } else {
+                    transaction(connection.newJedisResult(connection.getRequiredTransaction().sort(key)));
+                }
+
+                return null;
+            }
+            return (sortParams != null ? connection.getJedis().sort(key, sortParams) : connection.getJedis().sort(key));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#sort(byte[], org.springframework.data.redis.connection.SortParameters, byte[])
+     */
     @Override
     public Long sort(byte[] key, @Nullable SortParameters params, byte[] storeKey) {
+
         Assert.notNull(key, "Key must not be null!");
+
         SortingParams sortParams = JedisConverters.toSortingParams(params);
 
         try {
-            if (this.isPipelined()) {
+            if (isPipelined()) {
                 if (sortParams != null) {
-                    this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().sort(key, sortParams, storeKey)));
+                    pipeline(connection.newJedisResult(connection.getRequiredPipeline().sort(key, sortParams, storeKey)));
                 } else {
-                    this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().sort(key, storeKey)));
+                    pipeline(connection.newJedisResult(connection.getRequiredPipeline().sort(key, storeKey)));
                 }
 
                 return null;
-            } else if (this.isQueueing()) {
-                if (sortParams != null) {
-                    this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().sort(key, sortParams, storeKey)));
-                } else {
-                    this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().sort(key, storeKey)));
-                }
-
-                return null;
-            } else {
-                return sortParams != null ? this.connection.getJedis().sort(key, sortParams, storeKey) : this.connection.getJedis().sort(key, storeKey);
             }
-        } catch (Exception var6) {
-            throw this.connection.convertJedisAccessException(var6);
+            if (isQueueing()) {
+                if (sortParams != null) {
+                    transaction(connection.newJedisResult(connection.getRequiredTransaction().sort(key, sortParams, storeKey)));
+                } else {
+                    transaction(connection.newJedisResult(connection.getRequiredTransaction().sort(key, storeKey)));
+                }
+
+                return null;
+            }
+            return (sortParams != null ? connection.getJedis().sort(key, sortParams, storeKey)
+                    : connection.getJedis().sort(key, storeKey));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#dump(byte[])
+     */
     @Override
     public byte[] dump(byte[] key) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().dump(key)));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().dump(key)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().dump(key)));
-                return null;
-            } else {
-                return this.connection.getJedis().dump(key);
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().dump(key)));
+                return null;
+            }
+            return connection.getJedis().dump(key);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#restore(byte[], long, byte[], boolean)
+     */
     @Override
     public void restore(byte[] key, long ttlInMillis, byte[] serializedValue, boolean replace) {
+
         Assert.notNull(key, "Key must not be null!");
         Assert.notNull(serializedValue, "Serialized value must not be null!");
+
         if (replace) {
-            this.connection.execute("RESTORE", new byte[][]{key, JedisConverters.toBytes(ttlInMillis), serializedValue, JedisConverters.toBytes("REPLACE")});
-        } else if (ttlInMillis > 2147483647L) {
+
+            this.connection.execute("RESTORE", new byte[][] { key, JedisConverters.toBytes(ttlInMillis),
+                    serializedValue,
+                    JedisConverters.toBytes("REPLACE") });
+            return;
+        }
+
+        if (ttlInMillis > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("TtlInMillis must be less than Integer.MAX_VALUE for restore in Jedis.");
-        } else {
-            try {
-                if (this.isPipelined()) {
-                    this.pipeline(this.connection.newStatusResult(this.connection.getRequiredPipeline().restore(key, (int)ttlInMillis, serializedValue)));
-                } else if (this.isQueueing()) {
-                    this.transaction(this.connection.newStatusResult(this.connection.getRequiredTransaction().restore(key, (int)ttlInMillis, serializedValue)));
-                } else {
-                    this.connection.getJedis().restore(key, (int)ttlInMillis, serializedValue);
-                }
-            } catch (Exception var7) {
-                throw this.connection.convertJedisAccessException(var7);
-            }
         }
+        try {
+            if (isPipelined()) {
+                pipeline(connection
+                        .newStatusResult(connection.getRequiredPipeline().restore(key, (int) ttlInMillis, serializedValue)));
+                return;
+            }
+            if (isQueueing()) {
+                transaction(connection
+                        .newStatusResult(connection.getRequiredTransaction().restore(key, (int) ttlInMillis, serializedValue)));
+                return;
+            }
+            connection.getJedis().restore(key, (int) ttlInMillis, serializedValue);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
+        }
+
     }
 
-    @Override
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#encoding(byte[])
+     */
     @Nullable
+    @Override
     public ValueEncoding encodingOf(byte[] key) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().objectEncoding(key), JedisConverters::toEncoding, () -> {
-                    return ValueEncoding.RedisValueEncoding.VACANT;
-                }));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().objectEncoding(key),
+                        JedisConverters::toEncoding, () -> ValueEncoding.RedisValueEncoding.VACANT));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().objectEncoding(key), JedisConverters::toEncoding, () -> {
-                    return ValueEncoding.RedisValueEncoding.VACANT;
-                }));
-                return null;
-            } else {
-                return JedisConverters.toEncoding(this.connection.getJedis().objectEncoding(key));
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().objectEncoding(key),
+                        JedisConverters::toEncoding, () -> ValueEncoding.RedisValueEncoding.VACANT));
+                return null;
+            }
+            return JedisConverters.toEncoding(connection.getJedis().objectEncoding(key));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
-    @Override
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#idletime(byte[])
+     */
     @Nullable
+    @Override
     public Duration idletime(byte[] key) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().objectIdletime(key), Converters::secondsToDuration));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().objectIdletime(key),
+                        Converters::secondsToDuration));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().objectIdletime(key), Converters::secondsToDuration));
-                return null;
-            } else {
-                return Converters.secondsToDuration(this.connection.getJedis().objectIdletime(key));
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().objectIdletime(key),
+                        Converters::secondsToDuration));
+                return null;
+            }
+
+            return Converters.secondsToDuration(connection.getJedis().objectIdletime(key));
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
-    @Override
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisKeyCommands#refcount(byte[])
+     */
     @Nullable
+    @Override
     public Long refcount(byte[] key) {
+
         Assert.notNull(key, "Key must not be null!");
 
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.connection.newJedisResult(this.connection.getRequiredPipeline().objectRefcount(key)));
+            if (isPipelined()) {
+                pipeline(connection.newJedisResult(connection.getRequiredPipeline().objectRefcount(key)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.connection.newJedisResult(this.connection.getRequiredTransaction().objectRefcount(key)));
-                return null;
-            } else {
-                return this.connection.getJedis().objectRefcount(key);
             }
-        } catch (Exception var3) {
-            throw this.connection.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(connection.newJedisResult(connection.getRequiredTransaction().objectRefcount(key)));
+                return null;
+            }
+
+            return connection.getJedis().objectRefcount(key);
+        } catch (Exception ex) {
+            throw connection.convertJedisAccessException(ex);
         }
     }
 
     private boolean isPipelined() {
-        return this.connection.isPipelined();
+        return connection.isPipelined();
     }
 
     private void pipeline(JedisResult result) {
-        this.connection.pipeline(result);
+        connection.pipeline(result);
     }
 
     private boolean isQueueing() {
-        return this.connection.isQueueing();
+        return connection.isQueueing();
     }
 
     private void transaction(JedisResult result) {
-        this.connection.transaction(result);
-    }
-
-    public JedisKeyCommands(@NonNull JedisConnection connection) {
-        if (connection == null) {
-            throw new NullPointerException("connection is marked @NonNull but is null");
-        } else {
-            this.connection = connection;
-        }
+        connection.transaction(result);
     }
 }

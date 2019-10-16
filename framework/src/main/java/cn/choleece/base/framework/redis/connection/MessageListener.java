@@ -9,6 +9,12 @@ import org.springframework.lang.Nullable;
  */
 public interface MessageListener {
 
-    void onMessage(Message var1, @Nullable byte[] var2);
+    /**
+     * Callback for processing received objects through Redis.
+     *
+     * @param message message must not be {@literal null}.
+     * @param pattern pattern matching the channel (if specified) - can be {@literal null}.
+     */
+    void onMessage(Message message, @Nullable byte[] pattern);
 
 }

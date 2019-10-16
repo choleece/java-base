@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  **/
 public class DefaultValueOperations<K, V> extends AbstractOperations<K, V> implements ValueOperations<K, V> {
 
-    DefaultValueOperations(CusRedisTemplate<K, V> template) {
+    public DefaultValueOperations(CusRedisTemplate<K, V> template) {
         super(template);
     }
 

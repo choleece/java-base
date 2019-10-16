@@ -1,5 +1,7 @@
 package cn.choleece.base.framework.redis.connection.convert;
 
+import org.springframework.core.convert.converter.Converter;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;

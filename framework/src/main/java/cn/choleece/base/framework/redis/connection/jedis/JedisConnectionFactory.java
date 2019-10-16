@@ -33,534 +33,954 @@ import java.util.*;
  */
 public class JedisConnectionFactory implements InitializingBean, DisposableBean, RedisConnectionFactory {
 
-    /**
-     * 日志
-     */
-    private static final Log log = LogFactory.getLog(JedisConnectionFactory.class);
+    private final static Log log = LogFactory.getLog(JedisConnectionFactory.class);
+    private static final ExceptionTranslationStrategy EXCEPTION_TRANSLATION = new PassThroughExceptionTranslationStrategy(
+            JedisConverters.exceptionConverter());
 
-    /**
-     * 异常策略
-     */
-    private static final ExceptionTranslationStrategy EXCEPTION_TRANSLATION = new PassThroughExceptionTranslationStrategy(JedisConverters.exceptionConverter());
-
-    /**
-     * Jedis 客户端配置
-     */
     private final JedisClientConfiguration clientConfiguration;
+    private @Nullable JedisShardInfo shardInfo;
+    private boolean providedShardInfo = false;
+    private @Nullable Pool<Jedis> pool;
+    private boolean convertPipelineAndTxResults = true;
+    private RedisStandaloneConfiguration standaloneConfig = new RedisStandaloneConfiguration("localhost",
+            Protocol.DEFAULT_PORT);
+
+    private @Nullable RedisConfiguration configuration;
+
+//    private @Nullable JedisCluster cluster;
+//    private @Nullable ClusterCommandExecutor clusterCommandExecutor;
 
     /**
-     * ShardedJedis是通过一致性哈希来实现分布式缓存的，通过一定的策略把不同的key分配到不同的redis server上，达到横向扩展的目的
-     *
-     * 原生的集群方式是通过Hash Slot (Hash槽)实现的
-     *
-     * 参考:https://www.cnblogs.com/vhua/p/redis_1.html
+     * Constructs a new <code>JedisConnectionFactory</code> instance with default settings (default connection pooling, no
+     * shard information).
      */
-    @Nullable
-    private JedisShardInfo shardInfo;
-
-    private boolean providedShardInfo;
-
-    @Nullable
-    private Pool<Jedis> pool;
-
-    private boolean convertPipelineAndTxResults;
-
-    /**
-     * Redis 单节点配置
-     */
-    private RedisStandaloneConfiguration standaloneConfig;
-
-    /**
-     * Redis 配置
-     */
-    @Nullable
-    private RedisConfiguration configuration;
-
-    /**
-     * Jedis 集群
-     */
-    @Nullable
-    private JedisCluster cluster;
-
     public JedisConnectionFactory() {
-        this((JedisClientConfiguration)(new JedisConnectionFactory.MutableJedisClientConfiguration()));
+        this(new MutableJedisClientConfiguration());
     }
 
+    /**
+     * Constructs a new {@link JedisConnectionFactory} instance given {@link JedisClientConfiguration}.
+     *
+     * @param clientConfig must not be {@literal null}
+     * @since 2.0
+     */
     private JedisConnectionFactory(JedisClientConfiguration clientConfig) {
-        this.providedShardInfo = false;
-        this.convertPipelineAndTxResults = true;
-        this.standaloneConfig = new RedisStandaloneConfiguration("localhost", 6379);
+
         Assert.notNull(clientConfig, "JedisClientConfiguration must not be null!");
+
         this.clientConfiguration = clientConfig;
     }
 
-    /** @deprecated */
+    /**
+     * Constructs a new <code>JedisConnectionFactory</code> instance. Will override the other connection parameters passed
+     * to the factory.
+     *
+     * @param shardInfo shard information
+     * @deprecated since 2.0, configure Jedis with {@link JedisClientConfiguration} and
+     *             {@link RedisStandaloneConfiguration}.
+     */
     @Deprecated
     public JedisConnectionFactory(JedisShardInfo shardInfo) {
-        this(JedisConnectionFactory.MutableJedisClientConfiguration.create(shardInfo));
+
+        this(MutableJedisClientConfiguration.create(shardInfo));
+
         this.shardInfo = shardInfo;
         this.providedShardInfo = true;
     }
 
+    /**
+     * Constructs a new <code>JedisConnectionFactory</code> instance using the given pool configuration.
+     *
+     * @param poolConfig pool configuration
+     */
     public JedisConnectionFactory(JedisPoolConfig poolConfig) {
-        this((RedisSentinelConfiguration)null, poolConfig);
+        this((RedisSentinelConfiguration) null, poolConfig);
     }
 
+    /**
+     * Constructs a new {@link JedisConnectionFactory} instance using the given {@link JedisPoolConfig} applied to
+     * {@link JedisSentinelPool}.
+     *
+     * @param sentinelConfig must not be {@literal null}.
+     * @since 1.4
+     */
     public JedisConnectionFactory(RedisSentinelConfiguration sentinelConfig) {
-        this((RedisSentinelConfiguration)sentinelConfig, (JedisClientConfiguration)(new JedisConnectionFactory.MutableJedisClientConfiguration()));
+        this(sentinelConfig, new MutableJedisClientConfiguration());
     }
 
+    /**
+     * Constructs a new {@link JedisConnectionFactory} instance using the given {@link JedisPoolConfig} applied to
+     * {@link JedisSentinelPool}.
+     *
+     * @param sentinelConfig the sentinel configuration to use.
+     * @param poolConfig pool configuration. Defaulted to new instance if {@literal null}.
+     * @since 1.4
+     */
     public JedisConnectionFactory(RedisSentinelConfiguration sentinelConfig, JedisPoolConfig poolConfig) {
-        this.providedShardInfo = false;
-        this.convertPipelineAndTxResults = true;
-        this.standaloneConfig = new RedisStandaloneConfiguration("localhost", 6379);
+
         this.configuration = sentinelConfig;
-        this.clientConfiguration = JedisConnectionFactory.MutableJedisClientConfiguration.create((GenericObjectPoolConfig)(poolConfig != null ? poolConfig : new JedisPoolConfig()));
+        this.clientConfiguration = MutableJedisClientConfiguration
+                .create(poolConfig != null ? poolConfig : new JedisPoolConfig());
     }
 
+    /**
+     * Constructs a new {@link JedisConnectionFactory} instance using the given {@link RedisClusterConfiguration} applied
+     * to create a {@link JedisCluster}.
+     *
+     * @param clusterConfig must not be {@literal null}.
+     * @since 1.7
+     */
     public JedisConnectionFactory(RedisClusterConfiguration clusterConfig) {
-        this((RedisClusterConfiguration)clusterConfig, (JedisClientConfiguration)(new JedisConnectionFactory.MutableJedisClientConfiguration()));
+        this(clusterConfig, new MutableJedisClientConfiguration());
     }
 
+    /**
+     * Constructs a new {@link JedisConnectionFactory} instance using the given {@link RedisClusterConfiguration} applied
+     * to create a {@link JedisCluster}.
+     *
+     * @param clusterConfig must not be {@literal null}.
+     * @since 1.7
+     */
     public JedisConnectionFactory(RedisClusterConfiguration clusterConfig, JedisPoolConfig poolConfig) {
-        this.providedShardInfo = false;
-        this.convertPipelineAndTxResults = true;
-        this.standaloneConfig = new RedisStandaloneConfiguration("localhost", 6379);
+
         Assert.notNull(clusterConfig, "RedisClusterConfiguration must not be null!");
+
         this.configuration = clusterConfig;
-        this.clientConfiguration = JedisConnectionFactory.MutableJedisClientConfiguration.create((GenericObjectPoolConfig)poolConfig);
+        this.clientConfiguration = MutableJedisClientConfiguration.create(poolConfig);
     }
 
+    /**
+     * Constructs a new {@link JedisConnectionFactory} instance using the given {@link RedisStandaloneConfiguration}.
+     *
+     * @param standaloneConfig must not be {@literal null}.
+     * @since 2.0
+     */
     public JedisConnectionFactory(RedisStandaloneConfiguration standaloneConfig) {
-        this((RedisStandaloneConfiguration)standaloneConfig, (JedisClientConfiguration)(new JedisConnectionFactory.MutableJedisClientConfiguration()));
+        this(standaloneConfig, new MutableJedisClientConfiguration());
     }
 
+    /**
+     * Constructs a new {@link JedisConnectionFactory} instance using the given {@link RedisStandaloneConfiguration} and
+     * {@link JedisClientConfiguration}.
+     *
+     * @param standaloneConfig must not be {@literal null}.
+     * @param clientConfig must not be {@literal null}.
+     * @since 2.0
+     */
     public JedisConnectionFactory(RedisStandaloneConfiguration standaloneConfig, JedisClientConfiguration clientConfig) {
+
         this(clientConfig);
+
         Assert.notNull(standaloneConfig, "RedisStandaloneConfiguration must not be null!");
+
         this.standaloneConfig = standaloneConfig;
     }
 
+    /**
+     * Constructs a new {@link JedisConnectionFactory} instance using the given {@link RedisSentinelConfiguration} and
+     * {@link JedisClientConfiguration}.
+     *
+     * @param sentinelConfig must not be {@literal null}.
+     * @param clientConfig must not be {@literal null}.
+     * @since 2.0
+     */
     public JedisConnectionFactory(RedisSentinelConfiguration sentinelConfig, JedisClientConfiguration clientConfig) {
+
         this(clientConfig);
+
         Assert.notNull(sentinelConfig, "RedisSentinelConfiguration must not be null!");
+
         this.configuration = sentinelConfig;
     }
 
+    /**
+     * Constructs a new {@link JedisConnectionFactory} instance using the given {@link RedisClusterConfiguration} and
+     * {@link JedisClientConfiguration}.
+     *
+     * @param clusterConfig must not be {@literal null}.
+     * @param clientConfig must not be {@literal null}.
+     * @since 2.0
+     */
     public JedisConnectionFactory(RedisClusterConfiguration clusterConfig, JedisClientConfiguration clientConfig) {
+
         this(clientConfig);
+
         Assert.notNull(clusterConfig, "RedisClusterConfiguration must not be null!");
+
         this.configuration = clusterConfig;
     }
 
+    /**
+     * Returns a Jedis instance to be used as a Redis connection. The instance can be newly created or retrieved from a
+     * pool.
+     *
+     * @return Jedis instance ready for wrapping into a {@link RedisConnection}.
+     */
     protected Jedis fetchJedisConnector() {
         try {
-            if (this.getUsePool() && this.pool != null) {
-                return (Jedis)this.pool.getResource();
-            } else {
-                Jedis jedis = this.createJedis();
-                jedis.connect();
-                this.potentiallySetClientName(jedis);
-                return jedis;
+
+            if (getUsePool() && pool != null) {
+                return pool.getResource();
             }
-        } catch (Exception var2) {
-            throw new RedisConnectionFailureException("Cannot get Jedis connection", var2);
+
+            Jedis jedis = createJedis();
+            // force initialization (see Jedis issue #82)
+            jedis.connect();
+
+            potentiallySetClientName(jedis);
+            return jedis;
+        } catch (Exception ex) {
+            throw new RedisConnectionFailureException("Cannot get Jedis connection", ex);
         }
     }
 
     private Jedis createJedis() {
-        if (this.providedShardInfo) {
-            return new Jedis(this.getShardInfo());
-        } else {
-            Jedis jedis = new Jedis(this.getHostName(), this.getPort(), this.getConnectTimeout(), this.getReadTimeout(), this.isUseSsl(), (SSLSocketFactory)this.clientConfiguration.getSslSocketFactory().orElse((Object)null), (SSLParameters)this.clientConfiguration.getSslParameters().orElse((Object)null), (HostnameVerifier)this.clientConfiguration.getHostnameVerifier().orElse((Object)null));
-            Client client = jedis.getClient();
-            this.getRedisPassword().map(String::new).ifPresent(client::setPassword);
-            client.setDb((long)this.getDatabase());
-            return jedis;
+
+        if (providedShardInfo) {
+            return new Jedis(getShardInfo());
         }
+
+        Jedis jedis = new Jedis(getHostName(), getPort(), getConnectTimeout(), getReadTimeout(), isUseSsl(),
+                clientConfiguration.getSslSocketFactory().orElse(null), //
+                clientConfiguration.getSslParameters().orElse(null), //
+                clientConfiguration.getHostnameVerifier().orElse(null));
+
+        Client client = jedis.getClient();
+
+        getRedisPassword().map(String::new).ifPresent(client::setPassword);
+        client.setDb(getDatabase());
+
+        return jedis;
     }
 
+    /**
+     * Post process a newly retrieved connection. Useful for decorating or executing initialization commands on a new
+     * connection. This implementation simply returns the connection.
+     *
+     * @param connection the jedis connection.
+     * @return processed connection
+     */
     protected JedisConnection postProcessConnection(JedisConnection connection) {
         return connection;
     }
 
-    @Override
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
+     */
     public void afterPropertiesSet() {
-        if (this.shardInfo == null && this.clientConfiguration instanceof JedisConnectionFactory.MutableJedisClientConfiguration) {
-            this.providedShardInfo = false;
-            this.shardInfo = new JedisShardInfo(this.getHostName(), this.getPort(), this.isUseSsl(), (SSLSocketFactory)this.clientConfiguration.getSslSocketFactory().orElse((Object)null), (SSLParameters)this.clientConfiguration.getSslParameters().orElse((Object)null), (HostnameVerifier)this.clientConfiguration.getHostnameVerifier().orElse((Object)null));
-            Optional var10000 = this.getRedisPassword().map(String::new);
-            JedisShardInfo var10001 = this.shardInfo;
-            var10000.ifPresent(auth -> var10001.setPassword(auth));
-            int readTimeout = this.getReadTimeout();
+
+        if (shardInfo == null && clientConfiguration instanceof MutableJedisClientConfiguration) {
+
+            providedShardInfo = false;
+            shardInfo = new JedisShardInfo(getHostName(), getPort(), isUseSsl(), //
+                    clientConfiguration.getSslSocketFactory().orElse(null), //
+                    clientConfiguration.getSslParameters().orElse(null), //
+                    clientConfiguration.getHostnameVerifier().orElse(null));
+
+            getRedisPassword().map(String::new).ifPresent(shardInfo::setPassword);
+
+            int readTimeout = getReadTimeout();
+
             if (readTimeout > 0) {
-                this.shardInfo.setSoTimeout(readTimeout);
+                shardInfo.setSoTimeout(readTimeout);
             }
 
-            this.getMutableConfiguration().setShardInfo(this.shardInfo);
+            getMutableConfiguration().setShardInfo(shardInfo);
         }
 
-        if (this.getUsePool() && !this.isRedisClusterAware()) {
-            this.pool = this.createPool();
+        if (getUsePool() && !isRedisClusterAware()) {
+            this.pool = createPool();
         }
 
-        if (this.isRedisClusterAware()) {
-            this.cluster = this.createCluster();
+        if (isRedisClusterAware()) {
+//            this.cluster = createCluster();
         }
-
     }
 
     private Pool<Jedis> createPool() {
-        return this.isRedisSentinelAware() ? this.createRedisSentinelPool((RedisSentinelConfiguration)this.configuration) : this.createRedisPool();
+
+        if (isRedisSentinelAware()) {
+            return createRedisSentinelPool((RedisSentinelConfiguration) this.configuration);
+        }
+        return createRedisPool();
     }
 
+    /**
+     * Creates {@link JedisSentinelPool}.
+     *
+     * @param config the actual {@link RedisSentinelConfiguration}. Never {@literal null}.
+     * @return the {@link Pool} to use. Never {@literal null}.
+     * @since 1.4
+     */
     protected Pool<Jedis> createRedisSentinelPool(RedisSentinelConfiguration config) {
-        GenericObjectPoolConfig poolConfig = this.getPoolConfig() != null ? this.getPoolConfig() : new JedisPoolConfig();
-        return new JedisSentinelPool(config.getMaster().getName(), this.convertToJedisSentinelSet(config.getSentinels()), (GenericObjectPoolConfig)poolConfig, this.getConnectTimeout(), this.getReadTimeout(), this.getPassword(), this.getDatabase(), this.getClientName());
+
+        GenericObjectPoolConfig poolConfig = getPoolConfig() != null ? getPoolConfig() : new JedisPoolConfig();
+        return new JedisSentinelPool(config.getMaster().getName(), convertToJedisSentinelSet(config.getSentinels()),
+                poolConfig, getConnectTimeout(), getReadTimeout(), getPassword(), getDatabase(), getClientName());
     }
 
+    /**
+     * Creates {@link JedisPool}.
+     *
+     * @return the {@link Pool} to use. Never {@literal null}.
+     * @since 1.4
+     */
     protected Pool<Jedis> createRedisPool() {
-        return new JedisPool(this.getPoolConfig(), this.getHostName(), this.getPort(), this.getConnectTimeout(), this.getReadTimeout(), this.getPassword(), this.getDatabase(), this.getClientName(), this.isUseSsl(), (SSLSocketFactory)this.clientConfiguration.getSslSocketFactory().orElse((Object)null), (SSLParameters)this.clientConfiguration.getSslParameters().orElse((Object)null), (HostnameVerifier)this.clientConfiguration.getHostnameVerifier().orElse((Object)null));
+
+        return new JedisPool(getPoolConfig(), getHostName(), getPort(), getConnectTimeout(), getReadTimeout(),
+                getPassword(), getDatabase(), getClientName(), isUseSsl(),
+                clientConfiguration.getSslSocketFactory().orElse(null), //
+                clientConfiguration.getSslParameters().orElse(null), //
+                clientConfiguration.getHostnameVerifier().orElse(null));
     }
 
+    private JedisCluster createCluster() {
+
+        JedisCluster cluster = createCluster((RedisClusterConfiguration) this.configuration, getPoolConfig());
+//        JedisClusterTopologyProvider topologyProvider = new JedisClusterTopologyProvider(cluster);
+//        this.clusterCommandExecutor = new ClusterCommandExecutor(topologyProvider,
+//                new JedisClusterConnection.JedisClusterNodeResourceProvider(cluster, topologyProvider), EXCEPTION_TRANSLATION);
+        return cluster;
+    }
+
+    /**
+     * Creates {@link JedisCluster} for given {@link RedisClusterConfiguration} and {@link GenericObjectPoolConfig}.
+     *
+     * @param clusterConfig must not be {@literal null}.
+     * @param poolConfig can be {@literal null}.
+     * @return the actual {@link JedisCluster}.
+     * @since 1.7
+     */
+    protected JedisCluster createCluster(RedisClusterConfiguration clusterConfig, GenericObjectPoolConfig poolConfig) {
+
+        Assert.notNull(clusterConfig, "Cluster configuration must not be null!");
+
+        Set<HostAndPort> hostAndPort = new HashSet<>();
+        for (RedisNode node : clusterConfig.getClusterNodes()) {
+            hostAndPort.add(new HostAndPort(node.getHost(), node.getPort()));
+        }
+
+        int redirects = clusterConfig.getMaxRedirects() != null ? clusterConfig.getMaxRedirects() : 5;
+
+        int connectTimeout = getConnectTimeout();
+        int readTimeout = getReadTimeout();
+
+        return StringUtils.hasText(getPassword())
+                ? new JedisCluster(hostAndPort, connectTimeout, readTimeout, redirects, getPassword(), poolConfig)
+                : new JedisCluster(hostAndPort, connectTimeout, readTimeout, redirects, poolConfig);
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.beans.factory.DisposableBean#destroy()
+     */
+    public void destroy() {
+
+        if (getUsePool() && pool != null) {
+
+            try {
+                pool.destroy();
+            } catch (Exception ex) {
+                log.warn("Cannot properly close Jedis pool", ex);
+            }
+            pool = null;
+        }
+
+//        if (cluster != null) {
+//
+//            try {
+//                cluster.close();
+//            } catch (Exception ex) {
+//                log.warn("Cannot properly close Jedis cluster", ex);
+//            }
+//
+//            try {
+//                clusterCommandExecutor.destroy();
+//            } catch (Exception ex) {
+//                log.warn("Cannot properly close cluster command executor", ex);
+//            }
+//        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnectionFactory#getConnection()
+     */
+    public RedisConnection getConnection() {
+
+        if (isRedisClusterAware()) {
+//            return getClusterConnection();
+            return null;
+        }
+
+        Jedis jedis = fetchJedisConnector();
+        String clientName = clientConfiguration.getClientName().orElse(null);
+        JedisConnection connection = (getUsePool() ? new JedisConnection(jedis, pool, getDatabase(), clientName)
+                : new JedisConnection(jedis, null, getDatabase(), clientName));
+        connection.setConvertPipelineAndTxResults(convertPipelineAndTxResults);
+        return postProcessConnection(connection);
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnectionFactory#getClusterConnection()
+     */
+//    @Override
+//    public RedisClusterConnection getClusterConnection() {
+//
+//        if (!isRedisClusterAware()) {
+//            throw new InvalidDataAccessApiUsageException("Cluster is not configured!");
+//        }
+//        return new JedisClusterConnection(cluster, clusterCommandExecutor);
+//    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.dao.support.PersistenceExceptionTranslator#translateExceptionIfPossible(java.lang.RuntimeException)
+     */
     public DataAccessException translateExceptionIfPossible(RuntimeException ex) {
         return EXCEPTION_TRANSLATION.translate(ex);
     }
 
+    /**
+     * Returns the Redis hostname.
+     *
+     * @return the hostName.
+     */
     public String getHostName() {
-        return this.standaloneConfig.getHostName();
+        return standaloneConfig.getHostName();
     }
 
-    /** @deprecated */
+    /**
+     * Sets the Redis hostname.
+     *
+     * @param hostName the hostname to set.
+     * @deprecated since 2.0, configure the hostname using {@link RedisStandaloneConfiguration}.
+     */
     @Deprecated
     public void setHostName(String hostName) {
-        this.standaloneConfig.setHostName(hostName);
+        standaloneConfig.setHostName(hostName);
     }
 
+    /**
+     * Returns whether to use SSL.
+     *
+     * @return use of SSL.
+     * @since 1.8
+     */
     public boolean isUseSsl() {
-        return this.clientConfiguration.isUseSsl();
+        return clientConfiguration.isUseSsl();
     }
 
-    /** @deprecated */
+    /**
+     * Sets whether to use SSL.
+     *
+     * @param useSsl {@literal true} to use SSL.
+     * @since 1.8
+     * @deprecated since 2.0, configure the SSL usage with {@link JedisClientConfiguration}.
+     * @throws IllegalStateException if {@link JedisClientConfiguration} is immutable.
+     */
     @Deprecated
     public void setUseSsl(boolean useSsl) {
-        this.getMutableConfiguration().setUseSsl(useSsl);
+        getMutableConfiguration().setUseSsl(useSsl);
     }
 
+    /**
+     * Returns the password used for authenticating with the Redis server.
+     *
+     * @return password for authentication.
+     */
     public String getPassword() {
-        return (String)this.getRedisPassword().map(String::new).orElse((Object)null);
+        return getRedisPassword().map(String::new).orElse(null);
     }
 
     private RedisPassword getRedisPassword() {
-        RedisConfiguration var10000 = this.configuration;
-        RedisStandaloneConfiguration var10001 = this.standaloneConfig;
-        var10001.getClass();
-        return RedisConfiguration.getPasswordOrElse(var10000, var10001::getPassword);
+        return RedisConfiguration.getPasswordOrElse(this.configuration, standaloneConfig::getPassword);
     }
 
-    /** @deprecated */
+    /**
+     * Sets the password used for authenticating with the Redis server.
+     *
+     * @param password the password to set.
+     * @deprecated since 2.0, configure the password using {@link RedisStandaloneConfiguration},
+     *             {@link RedisSentinelConfiguration} or {@link RedisClusterConfiguration}.
+     */
     @Deprecated
     public void setPassword(String password) {
-        if (RedisConfiguration.isPasswordAware(this.configuration)) {
-            ((RedisConfiguration.WithPassword)this.configuration).setPassword(password);
-        } else {
-            this.standaloneConfig.setPassword(RedisPassword.of(password));
+
+        if (RedisConfiguration.isPasswordAware(configuration)) {
+
+            ((RedisConfiguration.WithPassword) configuration).setPassword(password);
+            return;
         }
+
+        standaloneConfig.setPassword(RedisPassword.of(password));
     }
 
+    /**
+     * Returns the port used to connect to the Redis instance.
+     *
+     * @return the Redis port.
+     */
     public int getPort() {
-        return this.standaloneConfig.getPort();
+        return standaloneConfig.getPort();
     }
 
-    /** @deprecated */
+    /**
+     * Sets the port used to connect to the Redis instance.
+     *
+     * @param port the Redis port.
+     * @deprecated since 2.0, configure the port using {@link RedisStandaloneConfiguration}.
+     */
     @Deprecated
     public void setPort(int port) {
-        this.standaloneConfig.setPort(port);
+        standaloneConfig.setPort(port);
     }
 
-    /** @deprecated */
+    /**
+     * Returns the shardInfo.
+     *
+     * @return the shardInfo.
+     * @deprecated since 2.0.
+     */
     @Deprecated
     @Nullable
     public JedisShardInfo getShardInfo() {
-        return this.shardInfo;
+        return shardInfo;
     }
 
-    /** @deprecated */
+    /**
+     * Sets the shard info for this factory.
+     *
+     * @param shardInfo the shardInfo to set.
+     * @deprecated since 2.0, configure the individual properties from {@link JedisShardInfo} using
+     *             {@link JedisClientConfiguration}.
+     * @throws IllegalStateException if {@link JedisClientConfiguration} is immutable.
+     */
     @Deprecated
     public void setShardInfo(JedisShardInfo shardInfo) {
+
         this.shardInfo = shardInfo;
         this.providedShardInfo = true;
-        this.getMutableConfiguration().setShardInfo(shardInfo);
+        getMutableConfiguration().setShardInfo(shardInfo);
     }
 
+    /**
+     * Returns the timeout.
+     *
+     * @return the timeout.
+     */
     public int getTimeout() {
-        return this.getReadTimeout();
+        return getReadTimeout();
     }
 
-    /** @deprecated */
+    /**
+     * Sets the timeout.
+     *
+     * @param timeout the timeout to set.
+     * @deprecated since 2.0, configure the timeout using {@link JedisClientConfiguration}.
+     * @throws IllegalStateException if {@link JedisClientConfiguration} is immutable.
+     */
     @Deprecated
     public void setTimeout(int timeout) {
-        this.getMutableConfiguration().setReadTimeout(Duration.ofMillis((long)timeout));
-        this.getMutableConfiguration().setConnectTimeout(Duration.ofMillis((long)timeout));
+
+        getMutableConfiguration().setReadTimeout(Duration.ofMillis(timeout));
+        getMutableConfiguration().setConnectTimeout(Duration.ofMillis(timeout));
     }
 
+    /**
+     * Indicates the use of a connection pool.
+     *
+     * @return the use of connection pooling.
+     */
     public boolean getUsePool() {
-        return this.isRedisSentinelAware() ? true : this.clientConfiguration.isUsePooling();
+
+        // Jedis Sentinel cannot operate without a pool.
+        if (isRedisSentinelAware()) {
+            return true;
+        }
+
+        return clientConfiguration.isUsePooling();
     }
 
-    /** @deprecated */
+    /**
+     * Turns on or off the use of connection pooling.
+     *
+     * @param usePool the usePool to set.
+     * @deprecated since 2.0, configure pooling usage with {@link JedisClientConfiguration}.
+     * @throws IllegalStateException if {@link JedisClientConfiguration} is immutable.
+     * @throws IllegalStateException if configured to use sentinel and {@code usePool} is {@literal false} as Jedis
+     *           requires pooling for Redis sentinel use.
+     */
     @Deprecated
     public void setUsePool(boolean usePool) {
-        if (this.isRedisSentinelAware() && !usePool) {
+
+        if (isRedisSentinelAware() && !usePool) {
             throw new IllegalStateException("Jedis requires pooling for Redis Sentinel use!");
-        } else {
-            this.getMutableConfiguration().setUsePooling(usePool);
         }
+
+        getMutableConfiguration().setUsePooling(usePool);
     }
 
+    /**
+     * Returns the poolConfig.
+     *
+     * @return the poolConfig
+     */
     @Nullable
     public GenericObjectPoolConfig getPoolConfig() {
-        return (GenericObjectPoolConfig)this.clientConfiguration.getPoolConfig().orElse((Object)null);
+        return clientConfiguration.getPoolConfig().orElse(null);
     }
 
-    /** @deprecated */
+    /**
+     * Sets the pool configuration for this factory.
+     *
+     * @param poolConfig the poolConfig to set.
+     * @deprecated since 2.0, configure {@link JedisPoolConfig} using {@link JedisClientConfiguration}.
+     * @throws IllegalStateException if {@link JedisClientConfiguration} is immutable.
+     */
     @Deprecated
     public void setPoolConfig(JedisPoolConfig poolConfig) {
-        this.getMutableConfiguration().setPoolConfig(poolConfig);
+        getMutableConfiguration().setPoolConfig(poolConfig);
     }
 
+    /**
+     * Returns the index of the database.
+     *
+     * @return the database index.
+     */
     public int getDatabase() {
-        RedisConfiguration var10000 = this.configuration;
-        RedisStandaloneConfiguration var10001 = this.standaloneConfig;
-        var10001.getClass();
-        return RedisConfiguration.getDatabaseOrElse(var10000, var10001::getDatabase);
+        return RedisConfiguration.getDatabaseOrElse(configuration, standaloneConfig::getDatabase);
     }
 
-    /** @deprecated */
+    /**
+     * Sets the index of the database used by this connection factory. Default is 0.
+     *
+     * @param index database index.
+     * @deprecated since 2.0, configure the client name using {@link RedisSentinelConfiguration} or
+     *             {@link RedisStandaloneConfiguration}.
+     */
     @Deprecated
     public void setDatabase(int index) {
+
         Assert.isTrue(index >= 0, "invalid DB index (a positive index required)");
-        if (RedisConfiguration.isDatabaseIndexAware(this.configuration)) {
-            ((RedisConfiguration.WithDatabaseIndex)this.configuration).setDatabase(index);
-        } else {
-            this.standaloneConfig.setDatabase(index);
+
+        if (RedisConfiguration.isDatabaseIndexAware(configuration)) {
+
+            ((RedisConfiguration.WithDatabaseIndex) configuration).setDatabase(index);
+            return;
         }
+
+        standaloneConfig.setDatabase(index);
     }
 
+    /**
+     * Returns the client name.
+     *
+     * @return the client name.
+     * @since 1.8
+     */
     @Nullable
     public String getClientName() {
-        return (String)this.clientConfiguration.getClientName().orElse((Object)null);
+        return clientConfiguration.getClientName().orElse(null);
     }
 
-    /** @deprecated */
+    /**
+     * Sets the client name used by this connection factory. Defaults to none which does not set a client name.
+     *
+     * @param clientName the client name.
+     * @since 1.8
+     * @deprecated since 2.0, configure the client name using {@link JedisClientConfiguration}.
+     * @throws IllegalStateException if {@link JedisClientConfiguration} is immutable.
+     */
     @Deprecated
     public void setClientName(String clientName) {
         this.getMutableConfiguration().setClientName(clientName);
     }
 
+    /**
+     * @return the {@link JedisClientConfiguration}.
+     * @since 2.0
+     */
     public JedisClientConfiguration getClientConfiguration() {
-        return this.clientConfiguration;
+        return clientConfiguration;
     }
 
+    /**
+     * @return the {@link RedisStandaloneConfiguration}.
+     * @since 2.0
+     */
     @Nullable
     public RedisStandaloneConfiguration getStandaloneConfiguration() {
-        return this.standaloneConfig;
+        return standaloneConfig;
     }
 
+    /**
+     * @return the {@link RedisStandaloneConfiguration}, may be {@literal null}.
+     * @since 2.0
+     */
     @Nullable
     public RedisSentinelConfiguration getSentinelConfiguration() {
-        return RedisConfiguration.isSentinelConfiguration(this.configuration) ? (RedisSentinelConfiguration)this.configuration : null;
+        return RedisConfiguration.isSentinelConfiguration(configuration) ? (RedisSentinelConfiguration) configuration
+                : null;
     }
 
+    /**
+     * @return the {@link RedisClusterConfiguration}, may be {@literal null}.
+     * @since 2.0
+     */
     @Nullable
     public RedisClusterConfiguration getClusterConfiguration() {
-        return RedisConfiguration.isClusterConfiguration(this.configuration) ? (RedisClusterConfiguration)this.configuration : null;
+        return RedisConfiguration.isClusterConfiguration(configuration) ? (RedisClusterConfiguration) configuration : null;
     }
 
+    /**
+     * Specifies if pipelined results should be converted to the expected data type. If false, results of
+     * {@link JedisConnection#closePipeline()} and {@link JedisConnection# exec()} will be of the type returned by the
+     * Jedis driver.
+     *
+     * @return Whether or not to convert pipeline and tx results.
+     */
     public boolean getConvertPipelineAndTxResults() {
-        return this.convertPipelineAndTxResults;
+        return convertPipelineAndTxResults;
     }
 
+    /**
+     * Specifies if pipelined results should be converted to the expected data type. If false, results of
+     * {@link JedisConnection#closePipeline()} and {@link JedisConnection# exec()} will be of the type returned by the
+     * Jedis driver.
+     *
+     * @param convertPipelineAndTxResults Whether or not to convert pipeline and tx results.
+     */
     public void setConvertPipelineAndTxResults(boolean convertPipelineAndTxResults) {
         this.convertPipelineAndTxResults = convertPipelineAndTxResults;
     }
 
+    /**
+     * @return true when {@link RedisSentinelConfiguration} is present.
+     * @since 1.4
+     */
     public boolean isRedisSentinelAware() {
-        return RedisConfiguration.isSentinelConfiguration(this.configuration);
+        return RedisConfiguration.isSentinelConfiguration(configuration);
     }
 
+    /**
+     * @return true when {@link RedisClusterConfiguration} is present.
+     * @since 2.0
+     */
     public boolean isRedisClusterAware() {
-        return RedisConfiguration.isClusterConfiguration(this.configuration);
+        return RedisConfiguration.isClusterConfiguration(configuration);
     }
 
-    public RedisSentinelConnection getSentinelConnection() {
-        if (!this.isRedisSentinelAware()) {
-            throw new InvalidDataAccessResourceUsageException("No Sentinels configured");
-        } else {
-            return new JedisSentinelConnection(this.getActiveSentinel());
-        }
-    }
+    /* (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnectionFactory#getSentinelConnection()
+     */
+//    @Override
+//    public RedisSentinelConnection getSentinelConnection() {
+//
+//        if (!isRedisSentinelAware()) {
+//            throw new InvalidDataAccessResourceUsageException("No Sentinels configured");
+//        }
+//
+//        return new JedisSentinelConnection(getActiveSentinel());
+//    }
 
     private Jedis getActiveSentinel() {
-        Assert.isTrue(RedisConfiguration.isSentinelConfiguration(this.configuration), "SentinelConfig must not be null!");
-        Iterator var1 = ((RedisConfiguration.SentinelConfiguration)this.configuration).getSentinels().iterator();
 
-        Jedis jedis;
-        do {
-            if (!var1.hasNext()) {
-                throw new InvalidDataAccessResourceUsageException("No Sentinel found");
+        Assert.isTrue(RedisConfiguration.isSentinelConfiguration(configuration), "SentinelConfig must not be null!");
+
+        for (RedisNode node : ((RedisConfiguration.SentinelConfiguration) configuration).getSentinels()) {
+
+            Jedis jedis = new Jedis(node.getHost(), node.getPort(), getConnectTimeout(), getReadTimeout());
+
+            if (jedis.ping().equalsIgnoreCase("pong")) {
+
+                potentiallySetClientName(jedis);
+                return jedis;
             }
+        }
 
-            RedisNode node = (RedisNode)var1.next();
-            jedis = new Jedis(node.getHost(), node.getPort(), this.getConnectTimeout(), this.getReadTimeout());
-        } while(!jedis.ping().equalsIgnoreCase("pong"));
-
-        this.potentiallySetClientName(jedis);
-        return jedis;
+        throw new InvalidDataAccessResourceUsageException("No Sentinel found");
     }
 
     private Set<String> convertToJedisSentinelSet(Collection<RedisNode> nodes) {
+
         if (CollectionUtils.isEmpty(nodes)) {
             return Collections.emptySet();
-        } else {
-            Set<String> convertedNodes = new LinkedHashSet(nodes.size());
-            Iterator var3 = nodes.iterator();
-
-            while(var3.hasNext()) {
-                RedisNode node = (RedisNode)var3.next();
-                if (node != null) {
-                    convertedNodes.add(node.asString());
-                }
-            }
-
-            return convertedNodes;
         }
+
+        Set<String> convertedNodes = new LinkedHashSet<>(nodes.size());
+        for (RedisNode node : nodes) {
+            if (node != null) {
+                convertedNodes.add(node.asString());
+            }
+        }
+        return convertedNodes;
     }
 
     private void potentiallySetClientName(Jedis jedis) {
-        this.clientConfiguration.getClientName().ifPresent(jedis::clientSetname);
+        clientConfiguration.getClientName().ifPresent(jedis::clientSetname);
     }
 
     private int getReadTimeout() {
-        return Math.toIntExact(this.clientConfiguration.getReadTimeout().toMillis());
+        return Math.toIntExact(clientConfiguration.getReadTimeout().toMillis());
     }
 
     private int getConnectTimeout() {
-        return Math.toIntExact(this.clientConfiguration.getConnectTimeout().toMillis());
+        return Math.toIntExact(clientConfiguration.getConnectTimeout().toMillis());
     }
 
-    private JedisConnectionFactory.MutableJedisClientConfiguration getMutableConfiguration() {
-        Assert.state(this.clientConfiguration instanceof JedisConnectionFactory.MutableJedisClientConfiguration, () -> {
-            return String.format("Client configuration must be instance of MutableJedisClientConfiguration but is %s", ClassUtils.getShortName(this.clientConfiguration.getClass()));
-        });
-        return (JedisConnectionFactory.MutableJedisClientConfiguration)this.clientConfiguration;
+    private MutableJedisClientConfiguration getMutableConfiguration() {
+
+        Assert.state(clientConfiguration instanceof MutableJedisClientConfiguration,
+                () -> String.format("Client configuration must be instance of MutableJedisClientConfiguration but is %s",
+                        ClassUtils.getShortName(clientConfiguration.getClass())));
+
+        return (MutableJedisClientConfiguration) clientConfiguration;
     }
 
+    /**
+     * Mutable implementation of {@link JedisClientConfiguration}.
+     *
+     * @author Mark Paluch
+     */
     static class MutableJedisClientConfiguration implements JedisClientConfiguration {
+
         private boolean useSsl;
-        @Nullable
-        private SSLSocketFactory sslSocketFactory;
-        @Nullable
-        private SSLParameters sslParameters;
-        @Nullable
-        private HostnameVerifier hostnameVerifier;
+        private @Nullable SSLSocketFactory sslSocketFactory;
+        private @Nullable SSLParameters sslParameters;
+        private @Nullable HostnameVerifier hostnameVerifier;
         private boolean usePooling = true;
         private GenericObjectPoolConfig poolConfig = new JedisPoolConfig();
-        @Nullable
-        private String clientName;
-        private Duration readTimeout = Duration.ofMillis(2000L);
-        private Duration connectTimeout = Duration.ofMillis(2000L);
-
-        MutableJedisClientConfiguration() {
-        }
+        private @Nullable String clientName;
+        private Duration readTimeout = Duration.ofMillis(Protocol.DEFAULT_TIMEOUT);
+        private Duration connectTimeout = Duration.ofMillis(Protocol.DEFAULT_TIMEOUT);
 
         public static JedisClientConfiguration create(JedisShardInfo shardInfo) {
-            JedisConnectionFactory.MutableJedisClientConfiguration configuration = new JedisConnectionFactory.MutableJedisClientConfiguration();
+
+            MutableJedisClientConfiguration configuration = new MutableJedisClientConfiguration();
             configuration.setShardInfo(shardInfo);
             return configuration;
         }
 
         public static JedisClientConfiguration create(GenericObjectPoolConfig jedisPoolConfig) {
-            JedisConnectionFactory.MutableJedisClientConfiguration configuration = new JedisConnectionFactory.MutableJedisClientConfiguration();
+
+            MutableJedisClientConfiguration configuration = new MutableJedisClientConfiguration();
             configuration.setPoolConfig(jedisPoolConfig);
             return configuration;
         }
 
+        /* (non-Javadoc)
+         * @see org.springframework.data.redis.connection.jedis.JedisClientConfiguration#isUseSsl()
+         */
         @Override
         public boolean isUseSsl() {
-            return this.useSsl;
+            return useSsl;
         }
 
         public void setUseSsl(boolean useSsl) {
             this.useSsl = useSsl;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.springframework.data.redis.connection.jedis.JedisClientConfiguration#getSslSocketFactory()
+         */
         @Override
         public Optional<SSLSocketFactory> getSslSocketFactory() {
-            return Optional.ofNullable(this.sslSocketFactory);
+            return Optional.ofNullable(sslSocketFactory);
         }
 
         public void setSslSocketFactory(SSLSocketFactory sslSocketFactory) {
             this.sslSocketFactory = sslSocketFactory;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.springframework.data.redis.connection.jedis.JedisClientConfiguration#getSslParameters()
+         */
         @Override
         public Optional<SSLParameters> getSslParameters() {
-            return Optional.ofNullable(this.sslParameters);
+            return Optional.ofNullable(sslParameters);
         }
 
         public void setSslParameters(SSLParameters sslParameters) {
             this.sslParameters = sslParameters;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.springframework.data.redis.connection.jedis.JedisClientConfiguration#getHostnameVerifier()
+         */
         @Override
         public Optional<HostnameVerifier> getHostnameVerifier() {
-            return Optional.ofNullable(this.hostnameVerifier);
+            return Optional.ofNullable(hostnameVerifier);
         }
 
         public void setHostnameVerifier(HostnameVerifier hostnameVerifier) {
             this.hostnameVerifier = hostnameVerifier;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.springframework.data.redis.connection.jedis.JedisClientConfiguration#isUsePooling()
+         */
         @Override
         public boolean isUsePooling() {
-            return this.usePooling;
+            return usePooling;
         }
 
         public void setUsePooling(boolean usePooling) {
             this.usePooling = usePooling;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.springframework.data.redis.connection.jedis.JedisClientConfiguration#getPoolConfig()
+         */
         @Override
         public Optional<GenericObjectPoolConfig> getPoolConfig() {
-            return Optional.ofNullable(this.poolConfig);
+            return Optional.ofNullable(poolConfig);
         }
 
         public void setPoolConfig(GenericObjectPoolConfig poolConfig) {
             this.poolConfig = poolConfig;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.springframework.data.redis.connection.jedis.JedisClientConfiguration#getClientName()
+         */
         @Override
         public Optional<String> getClientName() {
-            return Optional.ofNullable(this.clientName);
+            return Optional.ofNullable(clientName);
         }
 
         public void setClientName(String clientName) {
             this.clientName = clientName;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.springframework.data.redis.connection.jedis.JedisClientConfiguration#getReadTimeout()
+         */
         @Override
         public Duration getReadTimeout() {
-            return this.readTimeout;
+            return readTimeout;
         }
 
         public void setReadTimeout(Duration readTimeout) {
             this.readTimeout = readTimeout;
         }
 
+        /*
+         * (non-Javadoc)
+         * @see org.springframework.data.redis.connection.jedis.JedisClientConfiguration#getConnectTimeout()
+         */
         @Override
         public Duration getConnectTimeout() {
-            return this.connectTimeout;
+            return connectTimeout;
         }
 
         public void setConnectTimeout(Duration connectTimeout) {
@@ -568,12 +988,13 @@ public class JedisConnectionFactory implements InitializingBean, DisposableBean,
         }
 
         public void setShardInfo(JedisShardInfo shardInfo) {
-            this.setSslSocketFactory(shardInfo.getSslSocketFactory());
-            this.setSslParameters(shardInfo.getSslParameters());
-            this.setHostnameVerifier(shardInfo.getHostnameVerifier());
-            this.setUseSsl(shardInfo.getSsl());
-            this.setConnectTimeout(Duration.ofMillis((long)shardInfo.getConnectionTimeout()));
-            this.setReadTimeout(Duration.ofMillis((long)shardInfo.getSoTimeout()));
+
+            setSslSocketFactory(shardInfo.getSslSocketFactory());
+            setSslParameters(shardInfo.getSslParameters());
+            setHostnameVerifier(shardInfo.getHostnameVerifier());
+            setUseSsl(shardInfo.getSsl());
+            setConnectTimeout(Duration.ofMillis(shardInfo.getConnectionTimeout()));
+            setReadTimeout(Duration.ofMillis(shardInfo.getSoTimeout()));
         }
     }
 }

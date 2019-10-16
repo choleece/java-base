@@ -6,10 +6,12 @@ import cn.choleece.base.framework.redis.FallbackExceptionTranslationStrategy;
 import cn.choleece.base.framework.redis.RedisConnectionFailureException;
 import cn.choleece.base.framework.redis.RedisSystemException;
 import cn.choleece.base.framework.redis.connection.*;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import redis.clients.jedis.*;
+import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.util.Pool;
 
 import java.util.*;
@@ -23,556 +25,554 @@ import java.util.function.Supplier;
  */
 public class JedisConnection extends AbstractRedisConnection {
 
-    private static final ExceptionTranslationStrategy EXCEPTION_TRANSLATION = new FallbackExceptionTranslationStrategy(JedisConverters.exceptionConverter());
+    private static final ExceptionTranslationStrategy EXCEPTION_TRANSLATION = new FallbackExceptionTranslationStrategy(
+            JedisConverters.exceptionConverter());
 
-    /**
-     * jedis 实例
-     */
     private final Jedis jedis;
-
-    @Nullable
-    private Transaction transaction;
-
+    private @Nullable Transaction transaction;
+    private final @Nullable Pool<Jedis> pool;
     /**
-     * Jedis 连接池
+     * flag indicating whether the connection needs to be dropped or not
      */
-    private final Pool<Jedis> pool;
-
-    /**
-     * 是否中断
-     */
-    private boolean broken;
-
-    @Nullable
-    private volatile JedisSubscription subscription;
-
-    @Nullable
-    private volatile Pipeline pipeline;
-
-    /**
-     * 与RedisProperties里的database一样
-     */
+    private boolean broken = false;
+    private volatile @Nullable JedisSubscription subscription;
+    private volatile @Nullable Pipeline pipeline;
     private final int dbIndex;
-
     private final String clientName;
+    private boolean convertPipelineAndTxResults = true;
+    private List<JedisResult> pipelinedResults = new ArrayList<>();
+    private Queue<FutureResult<Response<?>>> txResults = new LinkedList<>();
 
-    private boolean convertPipelineAndTxResults;
-
-    private List<JedisResult> pipelinedResults;
-
-    private Queue<FutureResult<Response<?>>> txResults;
-
+    /**
+     * Constructs a new <code>JedisConnection</code> instance.
+     *
+     * @param jedis Jedis entity
+     */
     public JedisConnection(Jedis jedis) {
-        this(jedis, (Pool)null, 0);
+        this(jedis, null, 0);
     }
 
     /**
-     * Jedis 连接
+     * Constructs a new <code>JedisConnection</code> instance backed by a jedis pool.
+     *
      * @param jedis
-     * @param pool
+     * @param pool can be null, if no pool is used
      * @param dbIndex
      */
     public JedisConnection(Jedis jedis, Pool<Jedis> pool, int dbIndex) {
-        this(jedis, pool, dbIndex, (String)null);
+        this(jedis, pool, dbIndex, null);
     }
 
+    /**
+     * Constructs a new <code>JedisConnection</code> instance backed by a jedis pool.
+     *
+     * @param jedis
+     * @param pool can be null, if no pool is used
+     * @param dbIndex
+     * @param clientName the client name, can be {@literal null}.
+     * @since 1.8
+     */
     protected JedisConnection(Jedis jedis, @Nullable Pool<Jedis> pool, int dbIndex, String clientName) {
-        this.broken = false;
-        this.convertPipelineAndTxResults = true;
-        this.pipelinedResults = new ArrayList();
-        this.txResults = new LinkedList();
+
         this.jedis = jedis;
         this.pool = pool;
         this.dbIndex = dbIndex;
         this.clientName = clientName;
-        if ((long)dbIndex != jedis.getDB()) {
+
+        // select the db
+        // if this fail, do manual clean-up before propagating the exception
+        // as we're inside the constructor
+        if (dbIndex != jedis.getDB()) {
             try {
-                this.select(dbIndex);
-            } catch (DataAccessException var6) {
-                this.close();
-                throw var6;
+                select(dbIndex);
+            } catch (DataAccessException ex) {
+                close();
+                throw ex;
             }
         }
     }
 
     protected DataAccessException convertJedisAccessException(Exception ex) {
+
         if (ex instanceof NullPointerException) {
-            this.broken = true;
+            // An NPE before flush will leave data in the OutputStream of a pooled connection
+            broken = true;
         }
 
         DataAccessException exception = EXCEPTION_TRANSLATION.translate(ex);
         if (exception instanceof RedisConnectionFailureException) {
-            this.broken = true;
+            broken = true;
         }
 
-        return (DataAccessException)(exception != null ? exception : new RedisSystemException(ex.getMessage(), ex));
+        return exception != null ? exception : new RedisSystemException(ex.getMessage(), ex);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnection#keyCommands()
+     */
+    @Override
     public RedisKeyCommands keyCommands() {
         return new JedisKeyCommands(this);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnection#stringCommands()
+     */
+    @Override
     public RedisStringCommands stringCommands() {
         return new JedisStringCommands(this);
     }
 
-    public RedisListCommands listCommands() {
-        return new JedisListCommands(this);
-    }
-
-    public RedisSetCommands setCommands() {
-        return new JedisSetCommands(this);
-    }
-
-    public RedisZSetCommands zSetCommands() {
-        return new JedisZSetCommands(this);
-    }
-
-    public RedisHashCommands hashCommands() {
-        return new JedisHashCommands(this);
-    }
-
-    public RedisGeoCommands geoCommands() {
-        return new JedisGeoCommands(this);
-    }
-
-    public RedisScriptingCommands scriptingCommands() {
-        return new JedisScriptingCommands(this);
-    }
-
-    public RedisServerCommands serverCommands() {
-        return new JedisServerCommands(this);
-    }
-
-    public RedisHyperLogLogCommands hyperLogLogCommands() {
-        return new JedisHyperLogLogCommands(this);
-    }
-
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisCommands#execute(java.lang.String, byte[][])
+     */
+    @Override
     public Object execute(String command, byte[]... args) {
-        return this.execute(command, args, Connection::getOne, JedisClientUtils::getResponse);
+        return execute(command, args, Connection::getOne, JedisClientUtils::getResponse);
     }
 
-    <T> T execute(String command, byte[][] args, Function<Client, T> resultMapper, Function<Object, Response<?>> pipelineResponseMapper) {
+    <T> T execute(String command, byte[][] args, Function<Client, T> resultMapper,
+                  Function<Object, Response<?>> pipelineResponseMapper) {
+
         Assert.hasText(command, "A valid command needs to be specified!");
         Assert.notNull(args, "Arguments must not be null!");
 
         try {
-            Client client = JedisClientUtils.sendCommand(command, args, this.jedis);
-            if (!this.isQueueing() && !this.isPipelined()) {
-                return resultMapper.apply(client);
-            } else {
-                Response<?> result = (Response)pipelineResponseMapper.apply(this.isPipelined() ? this.getRequiredPipeline() : this.getRequiredTransaction());
-                if (this.isPipelined()) {
-                    this.pipeline(this.newJedisResult(result));
-                } else {
-                    this.transaction(this.newJedisResult(result));
-                }
 
+            Client client = JedisClientUtils.sendCommand(command, args, this.jedis);
+
+            if (isQueueing() || isPipelined()) {
+
+                Response<?> result = pipelineResponseMapper
+                        .apply(isPipelined() ? getRequiredPipeline() : getRequiredTransaction());
+                if (isPipelined()) {
+                    pipeline(newJedisResult(result));
+                } else {
+                    transaction(newJedisResult(result));
+                }
                 return null;
             }
-        } catch (Exception var7) {
-            throw this.convertJedisAccessException(var7);
+            return resultMapper.apply(client);
+        } catch (Exception ex) {
+            throw convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.AbstractRedisConnection#close()
+     */
+    @Override
     public void close() throws DataAccessException {
+
         super.close();
-        if (this.pool != null) {
-            if (this.broken) {
-                this.pool.returnBrokenResource(this.jedis);
+
+        // return the connection to the pool
+        if (pool != null) {
+
+            if (broken) {
+                pool.returnBrokenResource(jedis);
             } else {
-                this.jedis.close();
+                jedis.close();
             }
-
-        } else {
-            Exception exc = null;
-
-            try {
-                this.jedis.quit();
-            } catch (Exception var4) {
-                exc = var4;
-            }
-
-            try {
-                this.jedis.disconnect();
-            } catch (Exception var3) {
-                exc = var3;
-            }
-
-            if (exc != null) {
-                throw this.convertJedisAccessException(exc);
-            }
+            return;
         }
+        // else close the connection normally (doing the try/catch dance)
+        Exception exc = null;
+        try {
+            jedis.quit();
+        } catch (Exception ex) {
+            exc = ex;
+        }
+        try {
+            jedis.disconnect();
+        } catch (Exception ex) {
+            exc = ex;
+        }
+        if (exc != null)
+            throw convertJedisAccessException(exc);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnection#getNativeConnection()
+     */
+    @Override
     public Jedis getNativeConnection() {
-        return this.jedis;
+        return jedis;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnection#isClosed()
+     */
+    @Override
     public boolean isClosed() {
         try {
-            return !this.jedis.isConnected();
-        } catch (Exception var2) {
-            throw this.convertJedisAccessException(var2);
+            return !jedis.isConnected();
+        } catch (Exception ex) {
+            throw convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnection#isQueueing()
+     */
+    @Override
     public boolean isQueueing() {
-        return JedisClientUtils.isInMulti(this.jedis);
+        return JedisClientUtils.isInMulti(jedis);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnection#isPipelined()
+     */
+    @Override
     public boolean isPipelined() {
-        return this.pipeline != null;
+        return (pipeline != null);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnection#openPipeline()
+     */
+    @Override
     public void openPipeline() {
-        if (this.pipeline == null) {
-            this.pipeline = this.jedis.pipelined();
+        if (pipeline == null) {
+            pipeline = jedis.pipelined();
         }
-
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnection#closePipeline()
+     */
+    @Override
     public List<Object> closePipeline() {
-        if (this.pipeline != null) {
-            List var1;
+        if (pipeline != null) {
             try {
-                var1 = this.convertPipelineResults();
+                return convertPipelineResults();
             } finally {
-                this.pipeline = null;
-                this.pipelinedResults.clear();
+                pipeline = null;
+                pipelinedResults.clear();
             }
-
-            return var1;
-        } else {
-            return Collections.emptyList();
         }
+        return Collections.emptyList();
     }
 
     private List<Object> convertPipelineResults() {
-        List<Object> results = new ArrayList();
-        this.getRequiredPipeline().sync();
+        List<Object> results = new ArrayList<>();
+        getRequiredPipeline().sync();
         Exception cause = null;
-        Iterator var3 = this.pipelinedResults.iterator();
-
-        while(var3.hasNext()) {
-            JedisResult result = (JedisResult)var3.next();
-
+        for (JedisResult result : pipelinedResults) {
             try {
+
                 Object data = result.get();
+
                 if (!result.isStatus()) {
                     results.add(result.conversionRequired() ? result.convert(data) : data);
                 }
-            } catch (JedisDataException var7) {
-                DataAccessException dataAccessException = this.convertJedisAccessException(var7);
+            } catch (JedisDataException e) {
+                DataAccessException dataAccessException = convertJedisAccessException(e);
                 if (cause == null) {
                     cause = dataAccessException;
                 }
-
                 results.add(dataAccessException);
-            } catch (DataAccessException var8) {
+            } catch (DataAccessException e) {
                 if (cause == null) {
-                    cause = var8;
+                    cause = e;
                 }
-
-                results.add(var8);
+                results.add(e);
             }
         }
-
         if (cause != null) {
             throw new RedisPipelineException(cause, results);
-        } else {
-            return results;
         }
+        return results;
     }
 
     void pipeline(JedisResult result) {
-        if (this.isQueueing()) {
-            this.transaction(result);
+        if (isQueueing()) {
+            transaction(result);
         } else {
-            this.pipelinedResults.add(result);
+            pipelinedResults.add(result);
         }
-
     }
 
     void transaction(FutureResult<Response<?>> result) {
-        this.txResults.add(result);
+        txResults.add(result);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnectionCommands#echo(byte[])
+     */
+    @Override
     public byte[] echo(byte[] message) {
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.newJedisResult(this.getRequiredPipeline().echo(message)));
+            if (isPipelined()) {
+                pipeline(newJedisResult(getRequiredPipeline().echo(message)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.newJedisResult(this.getRequiredTransaction().echo(message)));
-                return null;
-            } else {
-                return this.jedis.echo(message);
             }
-        } catch (Exception var3) {
-            throw this.convertJedisAccessException(var3);
+            if (isQueueing()) {
+                transaction(newJedisResult(getRequiredTransaction().echo(message)));
+                return null;
+            }
+            return jedis.echo(message);
+        } catch (Exception ex) {
+            throw convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnectionCommands#ping()
+     */
+    @Override
     public String ping() {
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.newJedisResult(this.getRequiredPipeline().ping()));
+            if (isPipelined()) {
+                pipeline(newJedisResult(getRequiredPipeline().ping()));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.newJedisResult(this.getRequiredTransaction().ping()));
+            }
+            if (isQueueing()) {
+                transaction(newJedisResult(getRequiredTransaction().ping()));
                 return null;
-            } else {
-                return this.jedis.ping();
             }
-        } catch (Exception var2) {
-            throw this.convertJedisAccessException(var2);
+            return jedis.ping();
+        } catch (Exception ex) {
+            throw convertJedisAccessException(ex);
         }
-    }
-
-    public void discard() {
-        try {
-            if (!this.isPipelined()) {
-                this.getRequiredTransaction().discard();
-                return;
-            }
-
-            this.pipeline(this.newStatusResult(this.getRequiredPipeline().discard()));
-        } catch (Exception var5) {
-            throw this.convertJedisAccessException(var5);
-        } finally {
-            this.txResults.clear();
-            this.transaction = null;
-        }
-
-    }
-
-    public List<Object> exec() {
-        List results;
-        try {
-            if (!this.isPipelined()) {
-                if (this.transaction == null) {
-                    throw new InvalidDataAccessApiUsageException("No ongoing transaction. Did you forget to call multi?");
-                }
-
-                results = this.transaction.exec();
-                List var2 = !CollectionUtils.isEmpty(results) ? (new TransactionResultConverter(this.txResults, JedisConverters.exceptionConverter())).convert(results) : results;
-                return var2;
-            }
-
-            this.pipeline(this.newJedisResult(this.getRequiredPipeline().exec(), new TransactionResultConverter(new LinkedList(this.txResults), JedisConverters.exceptionConverter())));
-            results = null;
-        } catch (Exception var6) {
-            throw this.convertJedisAccessException(var6);
-        } finally {
-            this.txResults.clear();
-            this.transaction = null;
-        }
-
-        return results;
     }
 
     @Nullable
     public Pipeline getPipeline() {
-        return this.pipeline;
+        return pipeline;
     }
 
     public Pipeline getRequiredPipeline() {
-        Pipeline pipeline = this.getPipeline();
+
+        Pipeline pipeline = getPipeline();
+
         if (pipeline == null) {
             throw new IllegalStateException("Connection has no active pipeline");
-        } else {
-            return pipeline;
         }
+
+        return pipeline;
     }
 
     @Nullable
     public Transaction getTransaction() {
-        return this.transaction;
+        return transaction;
     }
 
     public Transaction getRequiredTransaction() {
-        Transaction transaction = this.getTransaction();
+
+        Transaction transaction = getTransaction();
+
         if (transaction == null) {
             throw new IllegalStateException("Connection has no active transaction");
-        } else {
-            return transaction;
         }
+
+        return transaction;
     }
 
     public Jedis getJedis() {
-        return this.jedis;
+        return jedis;
     }
 
     JedisResult newJedisResult(Response<?> response) {
-        return JedisResultBuilder.forResponse(response).build();
+        return JedisResult.JedisResultBuilder.forResponse(response).build();
     }
 
     <T, R> JedisResult newJedisResult(Response<T> response, Converter<T, R> converter) {
-        return JedisResultBuilder.forResponse(response).mappedWith(converter).convertPipelineAndTxResults(this.convertPipelineAndTxResults).build();
+
+        return JedisResult.JedisResultBuilder.<T, R> forResponse(response).mappedWith(converter)
+                .convertPipelineAndTxResults(convertPipelineAndTxResults).build();
     }
 
     <T, R> JedisResult newJedisResult(Response<T> response, Converter<T, R> converter, Supplier<R> defaultValue) {
-        return JedisResultBuilder.forResponse(response).mappedWith(converter).convertPipelineAndTxResults(this.convertPipelineAndTxResults).mapNullTo(defaultValue).build();
+
+        return JedisResult.JedisResultBuilder.<T, R> forResponse(response).mappedWith(converter)
+                .convertPipelineAndTxResults(convertPipelineAndTxResults).mapNullTo(defaultValue).build();
     }
 
-    JedisStatusResult newStatusResult(Response<?> response) {
-        return JedisResultBuilder.forResponse(response).buildStatusResult();
+    JedisResult.JedisStatusResult newStatusResult(Response<?> response) {
+        return JedisResult.JedisResultBuilder.forResponse(response).buildStatusResult();
     }
 
-    public void multi() {
-        if (!this.isQueueing()) {
-            try {
-                if (this.isPipelined()) {
-                    this.getRequiredPipeline().multi();
-                } else {
-                    this.transaction = this.jedis.multi();
-                }
-            } catch (Exception var2) {
-                throw this.convertJedisAccessException(var2);
-            }
-        }
-    }
-
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisConnectionCommands#select(int)
+     */
+    @Override
     public void select(int dbIndex) {
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.newStatusResult(this.getRequiredPipeline().select(dbIndex)));
-            } else if (this.isQueueing()) {
-                this.transaction(this.newStatusResult(this.getRequiredTransaction().select(dbIndex)));
-            } else {
-                this.jedis.select(dbIndex);
+            if (isPipelined()) {
+                pipeline(newStatusResult(getRequiredPipeline().select(dbIndex)));
+                return;
             }
-        } catch (Exception var3) {
-            throw this.convertJedisAccessException(var3);
-        }
-    }
-
-    public void unwatch() {
-        try {
-            this.jedis.unwatch();
-        } catch (Exception var2) {
-            throw this.convertJedisAccessException(var2);
-        }
-    }
-
-    public void watch(byte[]... keys) {
-        if (this.isQueueing()) {
-            throw new UnsupportedOperationException();
-        } else {
-            try {
-                byte[][] var2 = keys;
-                int var3 = keys.length;
-
-                for(int var4 = 0; var4 < var3; ++var4) {
-                    byte[] key = var2[var4];
-                    if (this.isPipelined()) {
-                        this.pipeline(this.newStatusResult(this.getRequiredPipeline().watch(new byte[][]{key})));
-                    } else {
-                        this.jedis.watch(new byte[][]{key});
-                    }
-                }
-
-            } catch (Exception var6) {
-                throw this.convertJedisAccessException(var6);
+            if (isQueueing()) {
+                transaction(newStatusResult(getRequiredTransaction().select(dbIndex)));
+                return;
             }
+            jedis.select(dbIndex);
+        } catch (Exception ex) {
+            throw convertJedisAccessException(ex);
         }
     }
 
+    //
+    // Pub/Sub functionality
+    //
+
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisPubSubCommands#publish(byte[], byte[])
+     */
+    @Override
     public Long publish(byte[] channel, byte[] message) {
         try {
-            if (this.isPipelined()) {
-                this.pipeline(this.newJedisResult(this.getRequiredPipeline().publish(channel, message)));
+            if (isPipelined()) {
+                pipeline(newJedisResult(getRequiredPipeline().publish(channel, message)));
                 return null;
-            } else if (this.isQueueing()) {
-                this.transaction(this.newJedisResult(this.getRequiredTransaction().publish(channel, message)));
-                return null;
-            } else {
-                return this.jedis.publish(channel, message);
             }
-        } catch (Exception var4) {
-            throw this.convertJedisAccessException(var4);
+            if (isQueueing()) {
+                transaction(newJedisResult(getRequiredTransaction().publish(channel, message)));
+                return null;
+            }
+            return jedis.publish(channel, message);
+        } catch (Exception ex) {
+            throw convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisPubSubCommands#getSubscription()
+     */
+    @Override
     public Subscription getSubscription() {
-        return this.subscription;
+        return subscription;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisPubSubCommands#isSubscribed()
+     */
+    @Override
     public boolean isSubscribed() {
-        return this.subscription != null && this.subscription.isAlive();
+        return (subscription != null && subscription.isAlive());
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisPubSubCommands#pSubscribe(org.springframework.data.redis.connection.MessageListener, byte[][])
+     */
+    @Override
     public void pSubscribe(MessageListener listener, byte[]... patterns) {
-        if (this.isSubscribed()) {
-            throw new RedisSubscribedConnectionException("Connection already subscribed; use the connection Subscription to cancel or add new channels");
-        } else if (this.isQueueing()) {
+        if (isSubscribed()) {
+            throw new RedisSubscribedConnectionException(
+                    "Connection already subscribed; use the connection Subscription to cancel or add new channels");
+        }
+        if (isQueueing()) {
             throw new UnsupportedOperationException();
-        } else if (this.isPipelined()) {
+        }
+        if (isPipelined()) {
             throw new UnsupportedOperationException();
-        } else {
-            try {
-                BinaryJedisPubSub jedisPubSub = new JedisMessageListener(listener);
-                this.subscription = new JedisSubscription(listener, jedisPubSub, (byte[][])null, patterns);
-                this.jedis.psubscribe(jedisPubSub, patterns);
-            } catch (Exception var4) {
-                throw this.convertJedisAccessException(var4);
-            }
+        }
+
+        try {
+            BinaryJedisPubSub jedisPubSub = new JedisMessageListener(listener);
+
+            subscription = new JedisSubscription(listener, jedisPubSub, null, patterns);
+            jedis.psubscribe(jedisPubSub, patterns);
+
+        } catch (Exception ex) {
+            throw convertJedisAccessException(ex);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.RedisPubSubCommands#subscribe(org.springframework.data.redis.connection.MessageListener, byte[][])
+     */
+    @Override
     public void subscribe(MessageListener listener, byte[]... channels) {
-        if (this.isSubscribed()) {
-            throw new RedisSubscribedConnectionException("Connection already subscribed; use the connection Subscription to cancel or add new channels");
-        } else if (this.isQueueing()) {
+        if (isSubscribed()) {
+            throw new RedisSubscribedConnectionException(
+                    "Connection already subscribed; use the connection Subscription to cancel or add new channels");
+        }
+
+        if (isQueueing()) {
             throw new UnsupportedOperationException();
-        } else if (this.isPipelined()) {
+        }
+        if (isPipelined()) {
             throw new UnsupportedOperationException();
-        } else {
-            try {
-                BinaryJedisPubSub jedisPubSub = new JedisMessageListener(listener);
-                this.subscription = new JedisSubscription(listener, jedisPubSub, channels, (byte[][])null);
-                this.jedis.subscribe(jedisPubSub, channels);
-            } catch (Exception var4) {
-                throw this.convertJedisAccessException(var4);
-            }
+        }
+
+        try {
+            BinaryJedisPubSub jedisPubSub = new JedisMessageListener(listener);
+
+            subscription = new JedisSubscription(listener, jedisPubSub, channels, null);
+            jedis.subscribe(jedisPubSub, channels);
+
+        } catch (Exception ex) {
+            throw convertJedisAccessException(ex);
         }
     }
 
+    /**
+     * Specifies if pipelined results should be converted to the expected data type. If false, results of
+     * {@link #closePipeline()} and {@link # exec()} will be of the type returned by the Jedis driver
+     *
+     * @param convertPipelineAndTxResults Whether or not to convert pipeline and tx results
+     */
     public void setConvertPipelineAndTxResults(boolean convertPipelineAndTxResults) {
         this.convertPipelineAndTxResults = convertPipelineAndTxResults;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.AbstractRedisConnection#isActive(org.springframework.data.redis.connection.RedisNode)
+     */
+    @Override
     protected boolean isActive(RedisNode node) {
-        Jedis temp = null;
 
-        boolean var4;
+        Jedis temp = null;
         try {
-            temp = this.getJedis(node);
+            temp = getJedis(node);
             temp.connect();
-            boolean var3 = temp.ping().equalsIgnoreCase("pong");
-            return var3;
-        } catch (Exception var8) {
-            var4 = false;
+            return temp.ping().equalsIgnoreCase("pong");
+        } catch (Exception e) {
+            return false;
         } finally {
             if (temp != null) {
                 temp.disconnect();
                 temp.close();
             }
-
         }
-
-        return var4;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.redis.connection.AbstractRedisConnection#getSentinelConnection(org.springframework.data.redis.connection.RedisNode)
+     */
+    @Override
     protected JedisSentinelConnection getSentinelConnection(RedisNode sentinel) {
-        return new JedisSentinelConnection(this.getJedis(sentinel));
+        return new JedisSentinelConnection(getJedis(sentinel));
     }
 
     protected Jedis getJedis(RedisNode node) {
+
         Jedis jedis = new Jedis(node.getHost(), node.getPort());
-        if (StringUtils.hasText(this.clientName)) {
-            jedis.clientSetname(this.clientName);
+
+        if (StringUtils.hasText(clientName)) {
+            jedis.clientSetname(clientName);
         }
 
         return jedis;

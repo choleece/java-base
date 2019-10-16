@@ -15,45 +15,76 @@ public interface ValueEncoding {
     @Nullable
     String raw();
 
+    /**
+     * Get the {@link ValueEncoding} for given {@code encoding}.
+     *
+     * @param encoding can be {@literal null}.
+     * @return never {@literal null}.
+     */
     static ValueEncoding of(@Nullable String encoding) {
-        return (ValueEncoding)ValueEncoding.RedisValueEncoding.lookup(encoding).orElse(() -> {
-            return encoding;
-        });
+        return RedisValueEncoding.lookup(encoding).orElse(() -> encoding);
     }
 
-    public enum RedisValueEncoding implements ValueEncoding {
-        RAW("raw"),
-        INT("int"),
-        ZIPLIST("ziplist"),
-        LINKEDLIST("linkedlist"),
-        INTSET("intset"),
-        HASHTABLE("hashtable"),
-        SKIPLIST("skiplist"),
-        VACANT((String)null);
+    /**
+     * Default {@link ValueEncoding} implementation of encodings used in Redis.
+     *
+     * @author Christoph Strobl
+     * @since 2.1
+     */
+    enum RedisValueEncoding implements ValueEncoding {
 
-        @Nullable
-        private final String raw;
+        /**
+         * Normal string encoding.
+         */
+        RAW("raw"), //
+        /**
+         * 64 bit signed interval String representing an integer.
+         */
+        INT("int"), //
+        /**
+         * Space saving representation for small lists, hashes and sorted sets.
+         */
+        ZIPLIST("ziplist"), //
+        /**
+         * Encoding for large lists.
+         */
+        LINKEDLIST("linkedlist"), //
+        /**
+         * Space saving representation for small sets that contain only integers.ø
+         */
+        INTSET("intset"), //
+        /**
+         * Encoding for large hashes.
+         */
+        HASHTABLE("hashtable"), //
+        /**
+         * Encoding for sorted sets of any size.
+         */
+        SKIPLIST("skiplist"), //
+        /**
+         * No encoding present due to non existing key.
+         */
+        VACANT(null);
 
-        private RedisValueEncoding(@Nullable String raw) {
+        private final @Nullable String raw;
+
+        RedisValueEncoding(@Nullable String raw) {
             this.raw = raw;
         }
 
+        @Override
         public String raw() {
-            return this.raw;
+            return raw;
         }
 
         @Nullable
         static Optional<ValueEncoding> lookup(@Nullable String encoding) {
-            ValueEncoding.RedisValueEncoding[] var1 = values();
-            int var2 = var1.length;
 
-            for(int var3 = 0; var3 < var2; ++var3) {
-                ValueEncoding valueEncoding = var1[var3];
+            for (ValueEncoding valueEncoding : values()) {
                 if (ObjectUtils.nullSafeEquals(valueEncoding.raw(), encoding)) {
                     return Optional.of(valueEncoding);
                 }
             }
-
             return Optional.empty();
         }
     }

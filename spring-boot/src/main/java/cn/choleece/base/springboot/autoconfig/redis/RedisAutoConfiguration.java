@@ -19,6 +19,6 @@ public class RedisAutoConfiguration implements DisposableBean {
 
     @Override
     public void destroy() throws Exception {
-
+        redisTemplate.opsForValue();
     }
 }

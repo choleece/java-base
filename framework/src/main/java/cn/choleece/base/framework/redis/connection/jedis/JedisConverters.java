@@ -6,6 +6,7 @@ import cn.choleece.base.framework.redis.connection.convert.*;
 import cn.choleece.base.framework.redis.core.ScanOptions;
 import cn.choleece.base.framework.redis.core.types.Expiration;
 import cn.choleece.base.framework.redis.core.types.RedisClientInfo;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;

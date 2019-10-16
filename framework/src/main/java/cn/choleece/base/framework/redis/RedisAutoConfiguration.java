@@ -2,6 +2,7 @@ package cn.choleece.base.framework.redis;
 
 import cn.choleece.base.framework.redis.connection.RedisConnectionFactory;
 import cn.choleece.base.framework.redis.core.RedisOperations;
+import cn.choleece.base.framework.template.CusRedisTemplate;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -35,9 +36,9 @@ public class RedisAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(name = "redisTemplate")
-    public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory)
+    public CusRedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory)
             throws UnknownHostException {
-        RedisTemplate<Object, Object> template = new RedisTemplate<>();
+        CusRedisTemplate<Object, Object> template = new CusRedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
         return template;
     }
