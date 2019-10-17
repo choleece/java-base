@@ -12,6 +12,7 @@
 ## Zookeeper & SpringBoot
 ```
 1. https://www.jianshu.com/p/833681d20373
+2. https://blog.csdn.net/cowbin2012/article/details/85337250
 ```
 
 ## paxos

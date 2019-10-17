@@ -1,6 +1,6 @@
 package cn.choleece.base.framework.zookeeper;
 
-import org.I0Itec.zkclient.ZkClient;
+import cn.choleece.base.framework.zookeeper.zkclient.ZkClientBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -17,9 +17,10 @@ import org.springframework.context.annotation.Configuration;
 public class ZookeeperAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean({ZkClient.class})
-    ZkClient zkClient() {
-        ZkClient zkClient = new ZkClient("");
+    @ConditionalOnMissingBean({ZkClientBean.class})
+    ZkClientBean zkClient(ZookeeperProperties properties) {
+        System.out.println(properties.toString());
+        ZkClientBean zkClient = new ZkClientBean(properties);
         return zkClient;
     }
 }
