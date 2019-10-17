@@ -14,5 +14,4 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConditionalOnClass(ZkClient.class)
 public class ZookeeperConnectionConfiguration {
-
 }

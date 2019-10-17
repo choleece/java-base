@@ -1,1 +1,3 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=cn.choleece.base.framework.redis.RedisAutoConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+cn.choleece.base.framework.redis.RedisAutoConfiguration,\
+cn.choleece.base.framework.zookeeper.ZookeeperAutoConfiguration
