@@ -1,7 +1,9 @@
 package cn.choleece.base.thread;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
 
 /**
  * @author choleece
@@ -10,7 +12,7 @@ import java.util.concurrent.Executors;
  **/
 public class ExecutorTest {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         ExecutorService service1 = Executors.newCachedThreadPool();
 
         ExecutorService service2 = Executors.newFixedThreadPool(2);
@@ -18,6 +20,13 @@ public class ExecutorTest {
         ExecutorService service3 = Executors.newSingleThreadExecutor();
 
         ExecutorService service4 = Executors.newScheduledThreadPool(1);
+
+        BlockingQueue<Integer> queue = new SynchronousQueue<>();
+//        System. out .print(queue.offer(1) + " ");
+//        System. out .print(queue.offer(2) + " ");
+//        System. out .print(queue.offer(3) + " ");
+        System. out .print(queue.take() + " ");
+        System. out .println(queue.size());
     }
 
 }
