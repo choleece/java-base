@@ -7,6 +7,10 @@ package cn.choleece.base.thread.communication;
  */
 public class TwoThreadWaitNotify {
 
+    public boolean flag = true;
+
+    public int start = 0;
+
     public static void main(String[] args) {
         TwoThreadWaitNotify two = new TwoThreadWaitNotify();
 
@@ -14,6 +18,7 @@ public class TwoThreadWaitNotify {
         Thread thread2 = new Thread(new PrintOuNum(two));
 
         thread1.start();
+
         thread2.start();
     }
 
@@ -27,17 +32,25 @@ public class TwoThreadWaitNotify {
 
         @Override
         public void run() {
-            for (int i = 0; i <= 100; i++) {
-                synchronized (number) {
-                    if (i % 2 == 1) {
-                        System.out.println("线程1打印奇数: " + i);
+            synchronized (number) {
+
+                while (number.start <= 100) {
+                    // 如果奇数线程抢到
+                    if (number.flag) {
+                        System.out.println("偶数线程抢到锁: " + number.start);
+
+                        number.start++;
+
+                        number.flag = false;
+
+                        number.notify();
+                    } else {
                         try {
                             number.wait();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
-                    number.notifyAll();
                 }
             }
         }
@@ -52,17 +65,24 @@ public class TwoThreadWaitNotify {
 
         @Override
         public void run() {
-            for (int i = 0; i <= 100; i++) {
-                synchronized (number) {
-                    if (i % 2 == 0) {
-                        System.out.println("线程2打印偶数: " + i);
+            synchronized (number) {
+                while (number.start <= 100) {
+                    // 如果奇数线程抢到
+                    if (!number.flag) {
+                        System.out.println("奇数线程抢到锁: " + number.start);
+
+                        number.start++;
+
+                        number.flag = true;
+
+                        number.notify();
+                    } else {
                         try {
                             number.wait();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
-                    number.notifyAll();
                 }
             }
         }

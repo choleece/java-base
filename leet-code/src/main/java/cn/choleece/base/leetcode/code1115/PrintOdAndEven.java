@@ -7,60 +7,81 @@ package cn.choleece.base.leetcode.code1115;
  */
 public class PrintOdAndEven {
 
+    public int num = 0;
+
     public static void main(String[] args) {
-        Object lock1 = new Object();
-        Object lock2 = new Object();
 
-        Thread thread1 = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (lock1) {
-                    for (int i = 0; i <= 100; i++) {
-                        if (i % 2 == 0) {
-                            System.out.println("线程1打印偶数: " + i);
+        PrintOdAndEven lock = new PrintOdAndEven();
 
-                            try {
-                                // 打印完后，线程释放锁资源
-                                lock1.wait();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            lock1.notify();
-                        }
-                    }
-                }
-            }
-        });
-
-        Thread thread2 = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (lock1) {
-                    for (int i = 0; i <= 100; i++) {
-                        if (i % 2 != 0) {
-                            System.out.println("线程2打印奇数:" + i);
-                            try {
-                                lock1.wait();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            lock1.notify();
-                        }
-                    }
-                }
-            }
-        });
+        Thread thread1 = new Thread(new PrintEven(lock));
+        Thread thread2 = new Thread(new PrintOdd(lock));
 
         thread1.start();
+        thread2.start();
 
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    }
+
+    static class PrintEven implements Runnable {
+
+        private PrintOdAndEven lock;
+
+        // 用于与多线程共享同一个lock
+        public PrintEven(PrintOdAndEven lock) {
+            this.lock = lock;
         }
 
-        thread2.start();
+        @Override
+        public void run() {
+            synchronized (lock) {
+                while (lock.num <= 100) {
+                    if (lock.num % 2 == 0) {
+                        System.out.println("偶数线程开始打印: " + lock.num);
+
+                        lock.num++;
+
+                        // 通知奇数线程可以打印了
+                        lock.notify();
+                    } else {
+                        // 如果又到了偶数线程，那么需要将偶数线程挂起
+                        try {
+                            lock.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    static class PrintOdd implements Runnable {
+        private PrintOdAndEven lock;
+
+        public PrintOdd(PrintOdAndEven lock) {
+            this.lock = lock;
+        }
+
+        @Override
+        public void run() {
+            synchronized (lock) {
+                while (lock.num <= 100) {
+                    if (lock.num % 2 == 1) {
+                        System.out.println("奇数线程开始打印: " + lock.num);
+
+                        lock.num++;
+
+                        // 通知偶数线程可以打印了
+                        lock.notify();
+                    } else {
+                        // 如果重复进入奇数线程，那么将奇数线程挂起
+                        try {
+                            lock.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
     }
 }
