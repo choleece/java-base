@@ -6,7 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  *
- * 队列知识：队列，阻塞队列(blocking queue，有很多的实现，LinkedBlockingQueue, ArrayBlockingQueue)，延迟队列（DelayQueue, 存放的内容必须继承Delayed接口， DelayQueue本身实现blocking queue）
+ * 队列知识：队列，阻塞队列(blocking queue，有很多的实现，LinkedBlockingQueue, ArrayBlockingQueue)，延迟队列（DelayQueueTest, 存放的内容必须继承Delayed接口， DelayQueue本身实现blocking queue）
  *
  * ## Queue的常用方法
  *
