@@ -84,17 +84,17 @@ public class ListNode {
     }
 
     public static void main(String[] args) {
-        ListNode root = initList(1, Arrays.asList(2, 3, 4, 5, 6));
+        ListNode root = initList(1, Arrays.asList(2, 3));
 
-        loopList(root);
+//        loopList(root);
+//
+//        ListNode reverseNode = reverseList(root);
+//
+//        loopList(reverseNode);
+//
+//        loopList(root);
 
-        ListNode reverseNode = reverseList(root);
-
-        loopList(reverseNode);
-
-        loopList(root);
-
-        ListNode segmentNode = segmentReverseList(root, 4);
+        ListNode segmentNode = segmentReverseList(root, 2);
 
         loopList(segmentNode);
     }

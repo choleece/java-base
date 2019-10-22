@@ -61,6 +61,7 @@ public class Solution142 {
             return null;
         }
         slow = head;
+        // 相遇点到环的起点的距离 与 起始点到环的起点的距离相等 他们再次相遇的点就是环的起始点
         while (!slow.equals(fast)) {
             fast = fast.next;
             slow = slow.next;

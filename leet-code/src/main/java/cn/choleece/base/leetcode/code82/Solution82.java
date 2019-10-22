@@ -52,7 +52,7 @@ public class Solution82 {
     }
 
     public static void main(String[] args) {
-        ListNode head = ListNode.initList(Arrays.asList(1, 2, 3, 4, 5, 5, 6));
+        ListNode head = ListNode.initList(Arrays.asList(1, 2, 3, 4, 5, 5, 5));
 
         ListNode.loopList(head);
 
