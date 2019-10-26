@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author choleece
- * @Description: 热加载
+ * @Description: 热加载 原理是通过自定义class loader，判断文件修改时间，如果跟开始的时间不一致，代表文件被修改过，那么就会去执行class loader操作，加载新的类进来
  * @Date 2019-10-23 23:04
  *
  * 参考：https://mp.weixin.qq.com/s/CrDADe0u3aa7Nwu4cH86Zg

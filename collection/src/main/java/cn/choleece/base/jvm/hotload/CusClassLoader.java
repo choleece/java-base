@@ -42,10 +42,13 @@ public class CusClassLoader extends ClassLoader {
         // 获取ext class loader
         ClassLoader extClassLoader = getExtClassLoader();
 
-        // 确保自定义的类不会覆盖Java的核心类
-        clazz = extClassLoader.loadClass(name);
-        if (clazz != null) {
-            return clazz;
+        try {
+            // 确保自定义的类不会覆盖Java的核心类
+            clazz = extClassLoader.loadClass(name);
+            if (clazz != null) {
+                return clazz;
+            }
+        } catch (ClassNotFoundException e) {
         }
 
         clazz = findClass(name);

@@ -40,7 +40,7 @@ public class WatchDog implements Runnable {
         try {
             CusClassLoader cusClassLoader = new CusClassLoader();
 
-            Class<?> clazz = cusClassLoader.loadClass("cn.choleece.base.jvm.hotload.VersionTest.class", false);
+            Class<?> clazz = cusClassLoader.loadClass("cn.choleece.base.jvm.hotload.VersionTest", false);
 
             Object test = clazz.newInstance();
 
