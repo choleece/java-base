@@ -52,6 +52,17 @@ public class ZkDistributeLock implements Lock {
         }
     }
 
+    public void lock() {
+        if (!tryLock()) {
+            // 对最小节点进行监听
+            waitForLock();
+
+            lock();
+        } else {
+            logger.info(Thread.currentThread().getName() + " 获得分布式锁！");
+        }
+    }
+
     public boolean tryLock() {
 
         // 如果currentPath为空，表明是第一次尝试加锁，第一次加锁赋值给currentPath
@@ -111,6 +122,11 @@ public class ZkDistributeLock implements Lock {
             }
         }
         zkClient.unsubscribeDataChanges(beforePath, listener);
+    }
+
+    public void unlock() {
+        // 释放锁，删除节点
+        zkClient.delete(currentPath);
     }
 
 
