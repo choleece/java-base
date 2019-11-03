@@ -1,6 +1,5 @@
-package cn.choleece.base.framework.zookeeper.util.lock;
+package cn.choleece.base.framework.util.lock;
 
-import cn.choleece.base.framework.lock.Lock;
 import org.I0Itec.zkclient.IZkDataListener;
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.logging.log4j.LogManager;
@@ -18,12 +17,12 @@ import java.util.concurrent.CountDownLatch;
  * @Description: zk 实现分布式锁
  * @Date 2019-11-01 23:07
  **/
-@Component
-public class ZkDistributeLock implements Lock {
+//@Component
+public class ZkLock implements Lock {
     @Autowired
     private ZkClient zkClient;
 
-    private static final Logger logger = LogManager.getLogger(ZkDistributeLock.class);
+    private static final Logger logger = LogManager.getLogger(ZkLock.class);
 
     /**
      * 锁节点
@@ -52,6 +51,7 @@ public class ZkDistributeLock implements Lock {
         }
     }
 
+    @Override
     public void lock() {
         if (!tryLock()) {
             // 对最小节点进行监听
@@ -124,10 +124,9 @@ public class ZkDistributeLock implements Lock {
         zkClient.unsubscribeDataChanges(beforePath, listener);
     }
 
+    @Override
     public void unlock() {
         // 释放锁，删除节点
         zkClient.delete(currentPath);
     }
-
-
 }

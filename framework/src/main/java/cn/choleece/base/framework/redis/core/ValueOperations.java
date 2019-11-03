@@ -16,92 +16,106 @@ import java.util.concurrent.TimeUnit;
  * @Date 2019-10-15 21:48
  **/
 public interface ValueOperations <K, V> {
-    void set(K var1, V var2);
 
-    void set(K var1, V var2, long var3, TimeUnit var5);
+    void set(K key, V value);
+
+    void set(K key, V value, long timeout, TimeUnit unit);
 
     default void set(K key, V value, Duration timeout) {
-        Assert.notNull(timeout, "Timeout must not be null!");
-        if (TimeoutUtils.hasMillis(timeout)) {
-            this.set(key, value, timeout.toMillis(), TimeUnit.MILLISECONDS);
-        } else {
-            this.set(key, value, timeout.getSeconds(), TimeUnit.SECONDS);
-        }
 
+        Assert.notNull(timeout, "Timeout must not be null!");
+
+        if (TimeoutUtils.hasMillis(timeout)) {
+            set(key, value, timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } else {
+            set(key, value, timeout.getSeconds(), TimeUnit.SECONDS);
+        }
     }
 
     @Nullable
-    Boolean setIfAbsent(K var1, V var2);
+    Boolean setIfAbsent(K key, V value);
 
     @Nullable
-    Boolean setIfAbsent(K var1, V var2, long var3, TimeUnit var5);
+    Boolean setIfAbsent(K key, V value, long timeout, TimeUnit unit);
 
     @Nullable
     default Boolean setIfAbsent(K key, V value, Duration timeout) {
+
         Assert.notNull(timeout, "Timeout must not be null!");
-        return TimeoutUtils.hasMillis(timeout) ? this.setIfAbsent(key, value, timeout.toMillis(), TimeUnit.MILLISECONDS) : this.setIfAbsent(key, value, timeout.getSeconds(), TimeUnit.SECONDS);
+
+        if (TimeoutUtils.hasMillis(timeout)) {
+            return setIfAbsent(key, value, timeout.toMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        return setIfAbsent(key, value, timeout.getSeconds(), TimeUnit.SECONDS);
     }
 
     @Nullable
-    Boolean setIfPresent(K var1, V var2);
+    Boolean setIfPresent(K key, V value);
 
     @Nullable
-    Boolean setIfPresent(K var1, V var2, long var3, TimeUnit var5);
+    Boolean setIfPresent(K key, V value, long timeout, TimeUnit unit);
 
     @Nullable
     default Boolean setIfPresent(K key, V value, Duration timeout) {
+
         Assert.notNull(timeout, "Timeout must not be null!");
-        return TimeoutUtils.hasMillis(timeout) ? this.setIfPresent(key, value, timeout.toMillis(), TimeUnit.MILLISECONDS) : this.setIfPresent(key, value, timeout.getSeconds(), TimeUnit.SECONDS);
+
+        if (TimeoutUtils.hasMillis(timeout)) {
+            return setIfPresent(key, value, timeout.toMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        return setIfPresent(key, value, timeout.getSeconds(), TimeUnit.SECONDS);
     }
 
-    void multiSet(Map<? extends K, ? extends V> var1);
+    void multiSet(Map<? extends K, ? extends V> map);
 
     @Nullable
-    Boolean multiSetIfAbsent(Map<? extends K, ? extends V> var1);
+    Boolean multiSetIfAbsent(Map<? extends K, ? extends V> map);
 
     @Nullable
-    V get(Object var1);
+    V get(Object key);
 
     @Nullable
-    V getAndSet(K var1, V var2);
+    V getAndSet(K key, V value);
 
     @Nullable
-    List<V> multiGet(Collection<K> var1);
+    List<V> multiGet(Collection<K> keys);
 
     @Nullable
-    Long increment(K var1);
+    Long increment(K key);
 
     @Nullable
-    Long increment(K var1, long var2);
+    Long increment(K key, long delta);
 
     @Nullable
-    Double increment(K var1, double var2);
+    Double increment(K key, double delta);
 
     @Nullable
-    Long decrement(K var1);
+    Long decrement(K key);
 
     @Nullable
-    Long decrement(K var1, long var2);
+    Long decrement(K key, long delta);
 
     @Nullable
-    Integer append(K var1, String var2);
+    Integer append(K key, String value);
 
     @Nullable
-    String get(K var1, long var2, long var4);
+    String get(K key, long start, long end);
 
-    void set(K var1, V var2, long var3);
-
-    @Nullable
-    Long size(K var1);
+    void set(K key, V value, long offset);
 
     @Nullable
-    Boolean setBit(K var1, long var2, boolean var4);
+    Long size(K key);
 
     @Nullable
-    Boolean getBit(K var1, long var2);
+    Boolean setBit(K key, long offset, boolean value);
 
     @Nullable
-    List<Long> bitField(K var1, BitFieldSubCommands var2);
+    Boolean getBit(K key, long offset);
+
+    @Nullable
+    List<Long> bitField(K key, BitFieldSubCommands subCommands);
 
     RedisOperations<K, V> getOperations();
 }

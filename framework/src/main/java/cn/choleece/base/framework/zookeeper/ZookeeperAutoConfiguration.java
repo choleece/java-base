@@ -12,12 +12,12 @@ import org.springframework.context.annotation.Configuration;
  * @Date 2019-10-16 22:22
  **/
 
-@Configuration
-@EnableConfigurationProperties(ZookeeperProperties.class)
+//@Configuration
+//@EnableConfigurationProperties(ZookeeperProperties.class)
 public class ZookeeperAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean({ZkClientBean.class})
+//    @Bean
+//    @ConditionalOnMissingBean({ZkClientBean.class})
     ZkClientBean zkClient(ZookeeperProperties properties) {
         System.out.println(properties.toString());
         ZkClientBean zkClient = new ZkClientBean(properties);

@@ -2,6 +2,9 @@ package cn.choleece.base.framework.redis;
 
 import cn.choleece.base.framework.redis.connection.RedisConnectionFactory;
 import cn.choleece.base.framework.redis.core.RedisOperations;
+import cn.choleece.base.framework.redis.serializer.Jackson2JsonRedisSerializer;
+import cn.choleece.base.framework.redis.serializer.RedisSerializer;
+import cn.choleece.base.framework.redis.serializer.StringRedisSerializer;
 import cn.choleece.base.framework.template.CusRedisTemplate;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -43,6 +46,11 @@ public class RedisAutoConfiguration {
             throws UnknownHostException {
         CusRedisTemplate<Object, Object> template = new CusRedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
+        RedisSerializer stringSerializer = new StringRedisSerializer();
+        template.setKeySerializer(stringSerializer);
+        template.setValueSerializer(stringSerializer);
+        template.setHashKeySerializer(stringSerializer);
+        template.setHashValueSerializer(stringSerializer);
         return template;
     }
 }
