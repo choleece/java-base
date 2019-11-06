@@ -19,6 +19,7 @@
         <module>miao-sha</module>
         <module>framework</module>
         <module>io</module>
+        <module>db</module>
     </modules>
 
     <properties>
