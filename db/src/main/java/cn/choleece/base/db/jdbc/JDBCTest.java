@@ -55,6 +55,10 @@ public class JDBCTest {
              */
             System.out.println("--建立链接--");
             connection = DriverManager.getConnection(BASE_URL, USER, PASSWORD);
+            // 设置事物的隔离级别，0:NONE 1:READ_UNCOMMITTED 2:READ_COMMITTED 4:REPEATABLE_READ 8:SERIALIZABLE
+            connection.setTransactionIsolation(Connection.TRANSACTION_NONE);
+            // 设置是否自动提交
+            connection.setAutoCommit(false);
 
             System.out.println("--链接建立成功--");
 
