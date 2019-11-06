@@ -25,6 +25,10 @@ package cn.choleece.base.jvm;
  **/
 public class ClassLoaderTest {
 
+    static {
+        System.out.println("是否初始化啊。。。。。");
+    }
+
     /**
      * 此方法可以查看各类加载器
      *
@@ -40,6 +44,25 @@ public class ClassLoaderTest {
         System.out.println(classLoader1);
         System.out.println(classLoader2);
         System.out.println(classLoader3);
+
+        try {
+            /**
+             * clazz 底层调用的是Class.forName(className,true,classloader) 第二个参数为是否初始化，默认为true
+             * clazz.forName结果显示会进行初始化操作，就是会执行静态代码块等操作
+             *
+             * 这也是为什么JDBC的数据库链接会使用Class.forName("package name")
+             */
+            Class clazz = Class.forName("cn.choleece.base.jvm.ClassLoaderTest");
+            System.out.println(clazz);
+
+            /**
+             * 结果证明Classloader.loadClass()不会进行初始化工作，即不会执行静态代码块
+             */
+            Class clazz1 = Thread.currentThread().getContextClassLoader().loadClass("cn.choleece.base.jvm.ClassForNameTest");
+            System.out.println(clazz1);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
 }
