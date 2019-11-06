@@ -1,7 +1,5 @@
 package cn.choleece.base.db.jdbc;
 
-import com.mysql.jdbc.Driver;
-
 import java.sql.*;
 
 /**
