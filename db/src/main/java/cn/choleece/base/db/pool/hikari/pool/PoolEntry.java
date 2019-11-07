@@ -33,12 +33,15 @@ import static cn.choleece.base.db.pool.hikari.util.ClockSource.*;
  *
  * @author Brett Wooldridge
  */
-final class PoolEntry implements ConcurrentBag.IConcurrentBagEntry
-{
+final class PoolEntry implements ConcurrentBag.IConcurrentBagEntry {
    private static final Logger LOGGER = LoggerFactory.getLogger(PoolEntry.class);
    private static final AtomicIntegerFieldUpdater<PoolEntry> stateUpdater;
 
+   /**
+    * 连接
+    */
    Connection connection;
+
    long lastAccessed;
    long lastBorrowed;
 
@@ -48,7 +51,14 @@ final class PoolEntry implements ConcurrentBag.IConcurrentBagEntry
 
    private volatile ScheduledFuture<?> endOfLife;
 
+   /**
+    * 每一个连接创建的statement都会放在连接pool entry 对应的openStatements数组里
+    */
    private final FastList<Statement> openStatements;
+
+   /**
+    * 连接池
+    */
    private final HikariPool hikariPool;
 
    private final boolean isReadOnly;

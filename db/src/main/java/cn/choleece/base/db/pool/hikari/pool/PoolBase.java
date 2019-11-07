@@ -46,31 +46,64 @@ import static cn.choleece.base.db.pool.hikari.util.UtilityElf.createInstance;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+/**
+ * 连接池基本配置
+ */
 abstract class PoolBase {
    private final Logger logger = LoggerFactory.getLogger(PoolBase.class);
 
+   /**
+    * 连接池配置 Hikari config 里是一些url, user, password, minIdle, maxIdle的常规参数
+    */
    public final HikariConfig config;
+
    IMetricsTrackerDelegate metricsTracker;
 
+   /**
+    * 连接池名称，final 类型修饰，不能被修改
+    */
    protected final String poolName;
 
+   /**
+    * 数据库名
+    */
    volatile String catalog;
+
    final AtomicReference<Exception> lastConnectionFailure;
 
+   /**
+    * 连接超时时间
+    */
    long connectionTimeout;
+
+   /**
+    * 验证超时时间
+    */
    long validationTimeout;
 
    private static final String[] RESET_STATES = {"readOnly", "autoCommit", "isolation", "catalog", "netTimeout", "schema"};
+
    private static final int UNINITIALIZED = -1;
+
    private static final int TRUE = 1;
+
    private static final int FALSE = 0;
 
    private int networkTimeout;
+
    private int isNetworkTimeoutSupported;
+
    private int isQueryTimeoutSupported;
+
    private int defaultTransactionIsolation;
+
    private int transactionIsolation;
+
    private Executor netTimeoutExecutor;
+
+   /**
+    * 数据源
+    */
    private DataSource dataSource;
 
    private final String schema;
@@ -82,8 +115,7 @@ abstract class PoolBase {
 
    private volatile boolean isValidChecked;
 
-   PoolBase(final HikariConfig config)
-   {
+   PoolBase(final HikariConfig config) {
       this.config = config;
 
       this.networkTimeout = UNINITIALIZED;
@@ -106,45 +138,50 @@ abstract class PoolBase {
       initializeDataSource();
    }
 
-   /** {@inheritDoc} */
    @Override
-   public String toString()
-   {
+   public String toString() {
       return poolName;
    }
 
+   // 回收，具体实现交给子类
    abstract void recycle(final PoolEntry poolEntry);
 
    // ***********************************************************************
    //                           JDBC methods
    // ***********************************************************************
 
-   void quietlyCloseConnection(final Connection connection, final String closureReason)
-   {
+   /**
+    * 平静的关闭连接，相比直接调用connection.close()，这里主要多调用了一个setNetworkTimeout()
+    * @param connection
+    * @param closureReason
+    */
+   void quietlyCloseConnection(final Connection connection, final String closureReason) {
       if (connection != null) {
          try {
             logger.debug("{} - Closing connection {}: {}", poolName, connection, closureReason);
 
             try {
                setNetworkTimeout(connection, SECONDS.toMillis(15));
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                // ignore
-            }
-            finally {
+            } finally {
                connection.close(); // continue with the close even if setNetworkTimeout() throws
             }
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             logger.debug("{} - Closing connection {} failed", poolName, connection, e);
          }
       }
    }
 
-   boolean isConnectionAlive(final Connection connection)
-   {
+   /**
+    * 判断连接是否存活
+    * @param connection
+    * @return
+    */
+   boolean isConnectionAlive(final Connection connection) {
       try {
          try {
+            // 验证连接是否超时，如果超时，跑出异常
             setNetworkTimeout(connection, validationTimeout);
 
             final int validationSeconds = (int) Math.max(1000L, validationTimeout) / 1000;
@@ -158,20 +195,20 @@ abstract class PoolBase {
                   setQueryTimeout(statement, validationSeconds);
                }
 
+               // 调用一下测试的sql
                statement.execute(config.getConnectionTestQuery());
             }
-         }
-         finally {
+         } finally {
             setNetworkTimeout(connection, networkTimeout);
 
+            // 最后调用完成后结束事务
             if (isIsolateInternalQueries && !isAutoCommit) {
                connection.rollback();
             }
          }
 
          return true;
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          lastConnectionFailure.set(e);
          logger.warn("{} - Failed to validate connection {} ({}). Possibly consider using a shorter maxLifetime value.",
                      poolName, connection, e.getMessage());
@@ -179,13 +216,11 @@ abstract class PoolBase {
       }
    }
 
-   Exception getLastConnectionFailure()
-   {
+   Exception getLastConnectionFailure() {
       return lastConnectionFailure.get();
    }
 
-   public DataSource getUnwrappedDataSource()
-   {
+   public DataSource getUnwrappedDataSource() {
       return dataSource;
    }
 
@@ -193,13 +228,23 @@ abstract class PoolBase {
    //                         PoolEntry methods
    // ***********************************************************************
 
-   PoolEntry newPoolEntry() throws Exception
-   {
+   /**
+    * 生成一个新的PoolEntry, 一个pool entry里包含一个新连接
+    * @return
+    * @throws Exception
+    */
+   PoolEntry newPoolEntry() throws Exception {
       return new PoolEntry(newConnection(), this, isReadOnly, isAutoCommit);
    }
 
-   void resetConnectionState(final Connection connection, final ProxyConnection proxyConnection, final int dirtyBits) throws SQLException
-   {
+   /**
+    * 重置连接状态
+    * @param connection
+    * @param proxyConnection
+    * @param dirtyBits
+    * @throws SQLException
+    */
+   void resetConnectionState(final Connection connection, final ProxyConnection proxyConnection, final int dirtyBits) throws SQLException {
       int resetBits = 0;
 
       if ((dirtyBits & DIRTY_BIT_READONLY) != 0 && proxyConnection.getReadOnlyState() != isReadOnly) {
@@ -237,8 +282,7 @@ abstract class PoolBase {
       }
    }
 
-   void shutdownNetworkTimeoutExecutor()
-   {
+   void shutdownNetworkTimeoutExecutor() {
       if (netTimeoutExecutor instanceof ThreadPoolExecutor) {
          ((ThreadPoolExecutor) netTimeoutExecutor).shutdownNow();
       }
@@ -297,9 +341,10 @@ abstract class PoolBase {
 
    /**
     * Create/initialize the underlying DataSource.
+    *
+    * 数据源初始化
     */
-   private void initializeDataSource()
-   {
+   private void initializeDataSource() {
       final String jdbcUrl = config.getJdbcUrl();
       final String username = config.getUsername();
       final String password = config.getPassword();
@@ -312,11 +357,9 @@ abstract class PoolBase {
       if (dsClassName != null && ds == null) {
          ds = createInstance(dsClassName, DataSource.class);
          PropertyElf.setTargetFromProperties(ds, dataSourceProperties);
-      }
-      else if (jdbcUrl != null && ds == null) {
+      } else if (jdbcUrl != null && ds == null) {
          ds = new DriverDataSource(jdbcUrl, driverClassName, dataSourceProperties, username, password);
-      }
-      else if (dataSourceJNDI != null && ds == null) {
+      } else if (dataSourceJNDI != null && ds == null) {
          try {
             InitialContext ic = new InitialContext();
             ds = (DataSource) ic.lookup(dataSourceJNDI);
@@ -337,9 +380,10 @@ abstract class PoolBase {
     * Obtain connection from data source.
     *
     * @return a Connection connection
+    *
+    * 获取一个新的连接
     */
-   private Connection newConnection() throws Exception
-   {
+   private Connection newConnection() throws Exception {
       final long start = currentTime();
 
       Connection connection = null;
@@ -347,24 +391,23 @@ abstract class PoolBase {
          String username = config.getUsername();
          String password = config.getPassword();
 
+         // 获取连接的方式根据username是否为空去判断
          connection = (username == null) ? dataSource.getConnection() : dataSource.getConnection(username, password);
 
+         // 获取到连接后，进行连接初始化，初始化内容为对连接设置配置的参数，比如auto committed，以及尝试执行初始化sql等操作
          setupConnection(connection);
          lastConnectionFailure.set(null);
          return connection;
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          if (connection != null) {
             quietlyCloseConnection(connection, "(Failed to create/setup connection)");
-         }
-         else if (getLastConnectionFailure() == null) {
+         } else if (getLastConnectionFailure() == null) {
             logger.debug("{} - Failed to create/setup connection: {}", poolName, e.getMessage());
          }
 
          lastConnectionFailure.set(e);
          throw e;
-      }
-      finally {
+      } finally {
          // tracker will be null during failFast check
          if (metricsTracker != null) {
             metricsTracker.recordConnectionCreated(elapsedMillis(start));
@@ -377,14 +420,14 @@ abstract class PoolBase {
     *
     * @param connection a Connection
     * @throws ConnectionSetupException thrown if any exception is encountered
+    *
+    * 根据配置初始化连接参数
     */
-   private void setupConnection(final Connection connection) throws ConnectionSetupException
-   {
+   private void setupConnection(final Connection connection) throws ConnectionSetupException {
       try {
          if (networkTimeout == UNINITIALIZED) {
             networkTimeout = getAndSetNetworkTimeout(connection, validationTimeout);
-         }
-         else {
+         } else {
             setNetworkTimeout(connection, validationTimeout);
          }
 
@@ -410,6 +453,7 @@ abstract class PoolBase {
             connection.setSchema(schema);
          }
 
+         // 执行初始化sql,判断连接是否好使
          executeSql(connection, config.getConnectionInitSql(), true);
 
          setNetworkTimeout(connection, networkTimeout);
@@ -542,9 +586,10 @@ abstract class PoolBase {
     * @param connection the connection to set the network timeout on
     * @param timeoutMs the number of milliseconds before timeout
     * @throws SQLException throw if the connection.setNetworkTimeout() call throws
+    *
+    *
     */
-   private void setNetworkTimeout(final Connection connection, final long timeoutMs) throws SQLException
-   {
+   private void setNetworkTimeout(final Connection connection, final long timeoutMs) throws SQLException {
       if (isNetworkTimeoutSupported == TRUE) {
          connection.setNetworkTimeout(netTimeoutExecutor, (int) timeoutMs);
       }
@@ -557,35 +602,34 @@ abstract class PoolBase {
     * @param sql the SQL to execute
     * @param isCommit whether to commit the SQL after execution or not
     * @throws SQLException throws if the init SQL execution fails
+    *
+    * 执行具体sql
     */
-   private void executeSql(final Connection connection, final String sql, final boolean isCommit) throws SQLException
-   {
+   private void executeSql(final Connection connection, final String sql, final boolean isCommit) throws SQLException {
       if (sql != null) {
          try (Statement statement = connection.createStatement()) {
             // connection was created a few milliseconds before, so set query timeout is omitted (we assume it will succeed)
             statement.execute(sql);
          }
 
+         // 根据隔离基本及是否执行isCommit，针对事事务进行相关操作
          if (isIsolateInternalQueries && !isAutoCommit) {
             if (isCommit) {
                connection.commit();
-            }
-            else {
+            } else {
                connection.rollback();
             }
          }
       }
    }
 
-   private void createNetworkTimeoutExecutor(final DataSource dataSource, final String dsClassName, final String jdbcUrl)
-   {
+   private void createNetworkTimeoutExecutor(final DataSource dataSource, final String dsClassName, final String jdbcUrl) {
       // Temporary hack for MySQL issue: http://bugs.mysql.com/bug.php?id=75615
       if ((dsClassName != null && dsClassName.contains("Mysql")) ||
           (jdbcUrl != null && jdbcUrl.contains("mysql")) ||
           (dataSource != null && dataSource.getClass().getName().contains("Mysql"))) {
          netTimeoutExecutor = new SynchronousExecutor();
-      }
-      else {
+      } else {
          ThreadFactory threadFactory = config.getThreadFactory();
          threadFactory = threadFactory != null ? threadFactory : new UtilityElf.DefaultThreadFactory(poolName + " network timeout executor", true);
          ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool(threadFactory);
@@ -653,16 +697,13 @@ abstract class PoolBase {
     * Special executor used only to work around a MySQL issue that has not been addressed.
     * MySQL issue: http://bugs.mysql.com/bug.php?id=75615
     */
-   private static class SynchronousExecutor implements Executor
-   {
+   private static class SynchronousExecutor implements Executor {
       /** {@inheritDoc} */
       @Override
-      public void execute(Runnable command)
-      {
+      public void execute(Runnable command) {
          try {
             command.run();
-         }
-         catch (Exception t) {
+         } catch (Exception t) {
             LoggerFactory.getLogger(PoolBase.class).debug("Failed to execute: {}", command, t);
          }
       }

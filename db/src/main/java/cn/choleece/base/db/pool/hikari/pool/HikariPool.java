@@ -44,10 +44,17 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class HikariPool extends PoolBase implements HikariPoolMXBean, ConcurrentBag.IBagStateListener {
    private final Logger logger = LoggerFactory.getLogger(HikariPool.class);
 
+   /**
+    * 线程池的几种状态
+    * 正常
+    */
    public static final int POOL_NORMAL = 0;
+   // 阻塞
    public static final int POOL_SUSPENDED = 1;
+   // 关闭
    public static final int POOL_SHUTDOWN = 2;
 
+   // 线程池当前状态
    public volatile int poolState;
 
    private final long aliveBypassWindowMs = Long.getLong("com.zaxxer.hikari.aliveBypassWindowMs", MILLISECONDS.toMillis(500));
@@ -59,6 +66,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, Conc
    private final PoolEntryCreator poolEntryCreator = new PoolEntryCreator(null /*logging prefix*/);
    private final PoolEntryCreator postFillPoolEntryCreator = new PoolEntryCreator("After adding ");
    private final Collection<Runnable> addConnectionQueue;
+
    private final ThreadPoolExecutor addConnectionExecutor;
    private final ThreadPoolExecutor closeConnectionExecutor;
 
@@ -75,8 +83,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, Conc
     *
     * @param config a HikariConfig instance
     */
-   public HikariPool(final HikariConfig config)
-   {
+   public HikariPool(final HikariConfig config) {
       super(config);
 
       this.connectionBag = new ConcurrentBag<>(this);
@@ -681,19 +688,17 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, Conc
 
    /**
     * Creating and adding poolEntries (connections) to the pool.
+    * 连接池对象创建器，实现callable 可以用future接收
     */
-   private final class PoolEntryCreator implements Callable<Boolean>
-   {
+   private final class PoolEntryCreator implements Callable<Boolean> {
       private final String loggingPrefix;
 
-      PoolEntryCreator(String loggingPrefix)
-      {
+      PoolEntryCreator(String loggingPrefix) {
          this.loggingPrefix = loggingPrefix;
       }
 
       @Override
-      public Boolean call()
-      {
+      public Boolean call() {
          long sleepBackoff = 250L;
          while (poolState == POOL_NORMAL && shouldCreateAnotherConnection()) {
             final PoolEntry poolEntry = createPoolEntry();
@@ -729,8 +734,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, Conc
    /**
     * The house keeping task to retire and maintain minimum idle connections.
     */
-   private final class HouseKeeper implements Runnable
-   {
+   private final class HouseKeeper implements Runnable {
       private volatile long previous = plusMillis(currentTime(), -housekeepingPeriodMs);
 
       @Override

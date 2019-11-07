@@ -55,9 +55,10 @@ import static java.util.concurrent.locks.LockSupport.parkNanos;
  * @author Brett Wooldridge
  *
  * @param <T> the templated type to store in the bag
+ *
+ * LinkedBlockingQueue and LinkedTransferQueue 一个高性能的并发包，自己重新实现
  */
-public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implements AutoCloseable
-{
+public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implements AutoCloseable {
    private static final Logger LOGGER = LoggerFactory.getLogger(ConcurrentBag.class);
 
    private final CopyOnWriteArrayList<T> sharedList;
@@ -70,8 +71,7 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
 
    private final SynchronousQueue<T> handoffQueue;
 
-   public interface IConcurrentBagEntry
-   {
+   public interface IConcurrentBagEntry {
       int STATE_NOT_IN_USE = 0;
       int STATE_IN_USE = 1;
       int STATE_REMOVED = -1;
@@ -82,8 +82,7 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
       int getState();
    }
 
-   public interface IBagStateListener
-   {
+   public interface IBagStateListener {
       void addBagItem(int waiting);
    }
 
@@ -92,8 +91,7 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
     *
     * @param listener the IBagStateListener to attach to this bag
     */
-   public ConcurrentBag(final IBagStateListener listener)
-   {
+   public ConcurrentBag(final IBagStateListener listener) {
       this.listener = listener;
       this.weakThreadLocals = useWeakThreadLocals();
 
@@ -102,8 +100,7 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
       this.sharedList = new CopyOnWriteArrayList<>();
       if (weakThreadLocals) {
          this.threadList = ThreadLocal.withInitial(() -> new ArrayList<>(16));
-      }
-      else {
+      } else {
          this.threadList = ThreadLocal.withInitial(() -> new FastList<>(IConcurrentBagEntry.class, 16));
       }
    }

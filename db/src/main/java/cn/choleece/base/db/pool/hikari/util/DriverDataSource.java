@@ -25,8 +25,7 @@ import java.util.Enumeration;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-public final class DriverDataSource implements DataSource
-{
+public final class DriverDataSource implements DataSource {
    private static final Logger LOGGER = LoggerFactory.getLogger(DriverDataSource.class);
    private static final String PASSWORD = "password";
    private static final String USER = "user";
@@ -35,8 +34,7 @@ public final class DriverDataSource implements DataSource
    private final Properties driverProperties;
    private Driver driver;
 
-   public DriverDataSource(String jdbcUrl, String driverClassName, Properties properties, String username, String password)
-   {
+   public DriverDataSource(String jdbcUrl, String driverClassName, Properties properties, String username, String password) {
       this.jdbcUrl = jdbcUrl;
       this.driverProperties = new Properties();
 
@@ -100,19 +98,16 @@ public final class DriverDataSource implements DataSource
          if (driver == null) {
             driver = DriverManager.getDriver(jdbcUrl);
             LOGGER.debug("Loaded driver with class name {} for jdbcUrl={}", driver.getClass().getName(), sanitizedUrl);
-         }
-         else if (!driver.acceptsURL(jdbcUrl)) {
+         } else if (!driver.acceptsURL(jdbcUrl)) {
             throw new RuntimeException("Driver " + driverClassName + " claims to not accept jdbcUrl, " + sanitizedUrl);
          }
-      }
-      catch (SQLException e) {
+      } catch (SQLException e) {
          throw new RuntimeException("Failed to get driver instance for jdbcUrl=" + sanitizedUrl, e);
       }
    }
 
    @Override
-   public Connection getConnection() throws SQLException
-   {
+   public Connection getConnection() throws SQLException {
       return driver.connect(jdbcUrl, driverProperties);
    }
 
