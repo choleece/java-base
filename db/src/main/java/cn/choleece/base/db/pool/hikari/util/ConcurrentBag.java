@@ -114,8 +114,7 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
     * @return a borrowed instance from the bag or null if a timeout occurs
     * @throws InterruptedException if interrupted while waiting
     */
-   public T borrow(long timeout, final TimeUnit timeUnit) throws InterruptedException
-   {
+   public T borrow(long timeout, final TimeUnit timeUnit) throws InterruptedException {
       // Try the thread-local list first
       final List<Object> list = threadList.get();
       for (int i = list.size() - 1; i >= 0; i--) {
@@ -196,8 +195,7 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
     *
     * @param bagEntry an object to add to the bag
     */
-   public void add(final T bagEntry)
-   {
+   public void add(final T bagEntry) {
       if (closed) {
          LOGGER.info("ConcurrentBag has been closed, ignoring add()");
          throw new IllegalStateException("ConcurrentBag has been closed, ignoring add()");
@@ -220,8 +218,7 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
     * @throws IllegalStateException if an attempt is made to remove an object
     *         from the bag that was not borrowed or reserved first
     */
-   public boolean remove(final T bagEntry)
-   {
+   public boolean remove(final T bagEntry) {
       if (!bagEntry.compareAndSet(STATE_IN_USE, STATE_REMOVED) && !bagEntry.compareAndSet(STATE_RESERVED, STATE_REMOVED) && !closed) {
          LOGGER.warn("Attempt to remove an object from the bag that was not borrowed or reserved: {}", bagEntry);
          return false;
@@ -239,8 +236,7 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
     * Close the bag to further adds.
     */
    @Override
-   public void close()
-   {
+   public void close() {
       closed = true;
    }
 
@@ -253,8 +249,7 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
     * @param state one of the {@link IConcurrentBagEntry} states
     * @return a possibly empty list of objects having the state specified
     */
-   public List<T> values(final int state)
-   {
+   public List<T> values(final int state) {
       final List<T> list = sharedList.stream().filter(e -> e.getState() == state).collect(Collectors.toList());
       Collections.reverse(list);
       return list;
@@ -327,8 +322,7 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
     * @param state the state of the items to count
     * @return a count of how many items in the bag are in the specified state
     */
-   public int getCount(final int state)
-   {
+   public int getCount(final int state) {
       int count = 0;
       for (IConcurrentBagEntry e : sharedList) {
          if (e.getState() == state) {
@@ -338,8 +332,7 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
       return count;
    }
 
-   public int[] getStateCounts()
-   {
+   public int[] getStateCounts() {
       final int[] states = new int[6];
       for (IConcurrentBagEntry e : sharedList) {
          ++states[e.getState()];
@@ -372,10 +365,10 @@ public class ConcurrentBag<T extends ConcurrentBag.IConcurrentBagEntry> implemen
     *
     * @return true if we should use WeakReferences in our ThreadLocals, false otherwise
     */
-   private boolean useWeakThreadLocals()
-   {
+   private boolean useWeakThreadLocals() {
       try {
-         if (System.getProperty("com.zaxxer.hikari.useWeakReferences") != null) {   // undocumented manual override of WeakReference behavior
+         // undocumented manual override of WeakReference behavior
+         if (System.getProperty("com.zaxxer.hikari.useWeakReferences") != null) {
             return Boolean.getBoolean("com.zaxxer.hikari.useWeakReferences");
          }
 

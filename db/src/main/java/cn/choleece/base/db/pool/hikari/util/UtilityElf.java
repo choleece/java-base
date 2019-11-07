@@ -43,12 +43,10 @@ public final class UtilityElf
     *
     * @param millis the number of milliseconds to sleep
     */
-   public static void quietlySleep(final long millis)
-   {
+   public static void quietlySleep(final long millis) {
       try {
          Thread.sleep(millis);
-      }
-      catch (InterruptedException e) {
+      } catch (InterruptedException e) {
          // I said be quiet!
          currentThread().interrupt();
       }
