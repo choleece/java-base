@@ -75,12 +75,20 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, Conc
    private final ThreadPoolExecutor addConnectionExecutor;
    private final ThreadPoolExecutor closeConnectionExecutor;
 
+    /**
+     * 用于连接池存储连接 底层是一个CopyOnWriteArray COW
+     */
    private final ConcurrentBag<PoolEntry> connectionBag;
 
    private final ProxyLeakTaskFactory leakTaskFactory;
+
+    /**
+     * 基于信号量实现的一个锁
+     */
    private final SuspendResumeLock suspendResumeLock;
 
    private final ScheduledExecutorService houseKeepingExecutorService;
+
    private ScheduledFuture<?> houseKeeperTask;
 
    /**
@@ -94,6 +102,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, Conc
       this.connectionBag = new ConcurrentBag<>(this);
       this.suspendResumeLock = config.isAllowPoolSuspension() ? new SuspendResumeLock() : SuspendResumeLock.FAUX_LOCK;
 
+      // 初始化一个定时的线程池，由于后台运行清理线程池中线程的程序
       this.houseKeepingExecutorService = initializeHouseKeepingExecutorService();
 
       checkFailFast();
@@ -113,7 +122,10 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, Conc
 
       LinkedBlockingQueue<Runnable> addQueue = new LinkedBlockingQueue<>(config.getMaximumPoolSize());
       this.addConnectionQueue = unmodifiableCollection(addQueue);
+
+      // 添加连接到连接池里
       this.addConnectionExecutor = createThreadPoolExecutor(addQueue, poolName + " connection adder", threadFactory, new ThreadPoolExecutor.DiscardPolicy());
+
       this.closeConnectionExecutor = createThreadPoolExecutor(config.getMaximumPoolSize(), poolName + " connection closer", threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
 
       this.leakTaskFactory = new ProxyLeakTaskFactory(config.getLeakDetectionThreshold(), houseKeepingExecutorService);
@@ -600,8 +612,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, Conc
     *
     * @return either the user specified {@link ScheduledExecutorService}, or the one we created
     */
-   private ScheduledExecutorService initializeHouseKeepingExecutorService()
-   {
+   private ScheduledExecutorService initializeHouseKeepingExecutorService() {
       if (config.getScheduledExecutor() == null) {
          final ThreadFactory threadFactory = Optional.ofNullable(config.getThreadFactory()).orElseGet(() -> new DefaultThreadFactory(poolName + " housekeeper", true));
          final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, threadFactory, new ThreadPoolExecutor.DiscardPolicy());

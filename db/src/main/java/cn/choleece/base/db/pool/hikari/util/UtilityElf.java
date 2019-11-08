@@ -180,6 +180,9 @@ public final class UtilityElf
       return -1;
    }
 
+   /**
+    * 线程工厂
+    */
    public static final class DefaultThreadFactory implements ThreadFactory {
 
       private final String threadName;
