@@ -39,8 +39,10 @@ public class ClassLoaderTest {
     public static void main(String[] args) {
 
         ClassLoaderTest test = new ClassLoaderTest();
+        System.out.println(test);
 
         ClassForNameTest nameTest = new ClassForNameTest();
+        System.out.println(nameTest);
 
         ClassLoader classLoader1 = ClassLoaderTest.class.getClassLoader();
         ClassLoader classLoader2 = classLoader1.getParent();
