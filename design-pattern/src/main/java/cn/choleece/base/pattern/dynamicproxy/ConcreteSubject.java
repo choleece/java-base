@@ -10,4 +10,9 @@ public class ConcreteSubject implements Subject {
     public void request() {
         System.out.println("request something...");
     }
+
+    @Override
+    public void response() {
+        System.out.println("这是我的第二个方法...");
+    }
 }

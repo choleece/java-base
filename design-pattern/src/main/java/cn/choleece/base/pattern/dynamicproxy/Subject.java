@@ -4,4 +4,6 @@ public interface Subject {
 
     void request();
 
+    void response();
+
 }

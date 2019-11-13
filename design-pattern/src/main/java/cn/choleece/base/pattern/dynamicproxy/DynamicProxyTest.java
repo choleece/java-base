@@ -12,6 +12,8 @@ public class DynamicProxyTest {
         Subject subject = (Subject) logHandler.newProxyInstance(new ConcreteSubject());
 
         subject.request();
+
+        subject.response();
     }
 
 }
