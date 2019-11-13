@@ -37,9 +37,18 @@ public class ClassLoaderTest {
      * @param args
      */
     public static void main(String[] args) {
+
+        ClassLoaderTest test = new ClassLoaderTest();
+
+        ClassForNameTest nameTest = new ClassForNameTest();
+
         ClassLoader classLoader1 = ClassLoaderTest.class.getClassLoader();
         ClassLoader classLoader2 = classLoader1.getParent();
         ClassLoader classLoader3 = classLoader2.getParent();
+
+        System.out.println(test.getClass().getClassLoader());
+        System.out.println(Thread.currentThread().getContextClassLoader());
+        System.out.println(nameTest.getClass().getClassLoader());
 
         System.out.println(classLoader1);
         System.out.println(classLoader2);
