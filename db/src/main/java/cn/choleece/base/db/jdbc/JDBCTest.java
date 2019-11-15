@@ -56,7 +56,7 @@ public class JDBCTest {
             System.out.println("--建立链接--");
             connection = DriverManager.getConnection(BASE_URL, USER, PASSWORD);
             // 设置事物的隔离级别，0:NONE 1:READ_UNCOMMITTED 2:READ_COMMITTED 4:REPEATABLE_READ 8:SERIALIZABLE
-            connection.setTransactionIsolation(Connection.TRANSACTION_NONE);
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
             // 设置是否自动提交
             connection.setAutoCommit(false);
 
@@ -71,6 +71,14 @@ public class JDBCTest {
             }
 
             // 获取数据库元数据，表名，字段名啥的
+            ResultSet resultSet = statement.getResultSet();
+            ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+
+            for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
+                System.out.println("columnName: " + resultSetMetaData.getColumnName(i));
+            }
+
+           // 获取数据库元数据，表名，字段名啥的
             DatabaseMetaData metaData = connection.getMetaData();
 
             rs.close();
