@@ -4,12 +4,16 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
        http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="hello" class="cn.choleece.base.framework.spring.ioc.HelloWorldBean">
+    <bean id="hello" class="cn.choleece.base.framework.spring.ioc.HelloWorldBean" init-method="init" destroy-method="destroy" lazy-init="true">
         <property name="name" value="choleece"/>
     </bean>
 
     <bean id="innerHello" class="cn.choleece.base.framework.spring.ioc.HelloWorldBean.Hello">
         <property name="name" value="choleece"/>
+    </bean>
+
+    <bean id="helloWorld" class="cn.choleece.base.framework.spring.ioc.BeanPostProcessorTest.HelloWorld" lazy-init="true" init-method="init" destroy-method="destroyMethod">
+        <property name="message" value="hello, world!"/>
     </bean>
 
 </beans>

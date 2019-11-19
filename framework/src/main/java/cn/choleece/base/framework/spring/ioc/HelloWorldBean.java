@@ -7,7 +7,7 @@ package cn.choleece.base.framework.spring.ioc;
  */
 public class HelloWorldBean {
 
-    static private String name;
+    private String name;
 
     public void sayHello() {
         System.out.println("hello, " + name);
@@ -35,5 +35,13 @@ public class HelloWorldBean {
         public void sayHello() {
             System.out.println("inner static class, hello " + name);
         }
+    }
+
+    public void init() {
+        System.out.println("初始化完成后...");
+    }
+
+    public void destroy() throws Exception {
+        System.out.println("bean销毁后...");
     }
 }

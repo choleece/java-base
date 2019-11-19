@@ -52,6 +52,9 @@ public class ClassLoaderTest {
         System.out.println(Thread.currentThread().getContextClassLoader());
         System.out.println(nameTest.getClass().getClassLoader());
 
+        System.out.println("----");
+        testClass(test.getClass());
+
         System.out.println(classLoader1);
         System.out.println(classLoader2);
         System.out.println(classLoader3);
@@ -74,6 +77,10 @@ public class ClassLoaderTest {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void testClass(Class clazz) {
+        System.out.println(clazz.getClassLoader());
     }
 
 }
