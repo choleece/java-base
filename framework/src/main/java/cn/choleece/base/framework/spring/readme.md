@@ -207,6 +207,9 @@ public Object postProcessAfterInitialization(Object bean, String beanName) throw
 8. 注册必要的Destruction相关的回调接口 ---> 9. 使用中 ---> 10. 是否实现里DisposableBean，以决定是否需要执行destroy方法 ---> 11. 检查是否有自定义的destroyMethod方法
 
 ## 分析bean 加载过程
+
+可参考:https://www.jianshu.com/p/baa1d48e7f57
+
 1. AbstractApplicationContext context = new ClassPathXmlApplicationContext("beans.xml");从xml里加载bean
 ```
 // configLocations为xml配置文件的classpath文件，组成一个string 数组
@@ -272,5 +275,30 @@ public void refresh() throws BeansException, IllegalStateException {
         }
 
     }
+}
+```
+
+3. 加载配置文件，然后解析里边的配置项,这里查看的是AbstractXmlApplicationContext里的loadBeanDefinitions
+```
+protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throws BeansException, IOException {
+    XmlBeanDefinitionReader beanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);
+    beanDefinitionReader.setEnvironment(this.getEnvironment());
+    beanDefinitionReader.setResourceLoader(this);
+    beanDefinitionReader.setEntityResolver(new ResourceEntityResolver(this));
+    this.initBeanDefinitionReader(beanDefinitionReader);
+    this.loadBeanDefinitions(beanDefinitionReader);
+}
+
+protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) throws BeansException, IOException {
+    Resource[] configResources = this.getConfigResources();
+    if (configResources != null) {
+        reader.loadBeanDefinitions(configResources);
+    }
+
+    String[] configLocations = this.getConfigLocations();
+    if (configLocations != null) {
+        reader.loadBeanDefinitions(configLocations);
+    }
+
 }
 ```
