@@ -1,8 +1,8 @@
 package cn.choleece.base.framework.mybatis.spring;
 
+import cn.choleece.base.framework.mybatis.config.MybatisConfig;
 import cn.choleece.base.framework.mybatis.entity.City;
 import cn.choleece.base.framework.mybatis.mapper.CityMapper;
-import cn.choleece.base.framework.spring.ioc.HelloWorldComponent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -16,7 +16,7 @@ import java.util.List;
 public class SpringMybatisTest {
 
     public static void main(String[] args) {
-        ApplicationContext applicationContext = new AnnotationConfigApplicationContext(HelloWorldComponent.class);
+        ApplicationContext applicationContext = new AnnotationConfigApplicationContext(MybatisConfig.class);
 
         CityMapper cityMapper = (CityMapper) applicationContext.getBean("cityMapper");
 

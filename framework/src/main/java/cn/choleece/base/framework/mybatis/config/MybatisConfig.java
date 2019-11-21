@@ -22,7 +22,7 @@ public class MybatisConfig {
 
     static final String USER = "cyber";
 
-    static final String PASSWORD = "123456";
+    static final String PASSWORD = "PxBLKQ2!LPBkPUMK";
 
     static final String CLASS_DRIVER = "com.mysql.jdbc.Driver";
 
