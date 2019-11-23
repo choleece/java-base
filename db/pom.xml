@@ -13,7 +13,6 @@
 
     <properties>
         <mysql-con-version>5.1.47</mysql-con-version>
-        <hibernate.version>5.2.10.Final</hibernate.version>
         <javassist.version>3.24.1-GA</javassist.version>
         <metrics.version>3.2.4</metrics.version>
         <simpleclient.version>0.0.26</simpleclient.version>
@@ -45,24 +44,6 @@
             <artifactId>micrometer-core</artifactId>
             <version>${micrometer.version}</version>
             <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-core</artifactId>
-            <version>${hibernate.version}</version>
-            <scope>provided</scope>
-            <optional>true</optional>
-            <exclusions>
-                <exclusion>
-                    <artifactId>jboss-logging</artifactId>
-                    <groupId>org.jboss.logging</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>jboss-logging-annotations</artifactId>
-                    <groupId>org.jboss.logging</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>

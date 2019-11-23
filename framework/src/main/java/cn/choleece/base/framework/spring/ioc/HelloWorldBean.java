@@ -1,11 +1,20 @@
 package cn.choleece.base.framework.spring.ioc;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+
 /**
  * @description: TODO
  * @author: choleece
  * @time: 2019-11-19 14:22
  */
-public class HelloWorldBean {
+public class HelloWorldBean implements BeanFactoryPostProcessor {
+
+    @Override
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+        System.out.println("------");
+    }
 
     private String name;
 
@@ -21,7 +30,13 @@ public class HelloWorldBean {
         this.name = name;
     }
 
-    public static class Hello {
+    public static class Hello implements BeanFactoryPostProcessor {
+
+        @Override
+        public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+            System.out.println("***");
+        }
+
         String name;
 
         public String getName() {

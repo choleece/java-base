@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="userService" class="cn.choleece.base.framework.spring.aop.service.impl.UserServiceImpl"/>
+    <bean id="orderService" class="cn.choleece.base.framework.spring.aop.service.impl.OrderServiceImpl"/>
+
+    <bean id="logArgsAdvice" class="cn.choleece.base.framework.spring.aop.advice.LogArgsAdvice"/>
+    <bean id="logResultAdvice" class="cn.choleece.base.framework.spring.aop.advice.LogResultAdvice"/>
+
+    <bean id="logArgsAdvisor" class="org.springframework.aop.support.RegexpMethodPointcutAdvisor">
+        <property name="advice" ref="logArgsAdvice"/>
+        <property name="pattern" value="cn.choleece.base.framework.spring.aop.service.*.query.*"/>
+    </bean>
+
+    <bean id="logResultAdvisor" class="org.springframework.aop.support.RegexpMethodPointcutAdvisor">
+        <property name="advice" ref="logResultAdvice"/>
+        <property name="pattern" value="cn.choleece.base.framework.spring.aop.service.*.query.*"/>
+    </bean>
+
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"/>
+
+</beans>
