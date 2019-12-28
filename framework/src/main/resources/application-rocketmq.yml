@@ -1,0 +1,15 @@
+choleece:
+  rocket:
+    mq:
+      namesrvAddr: 10.50.7.24:9876 # 指定name server 地址
+      producerGroupName: user_producer_group # 生产者组名称
+      consumerGroupName: user_consumer_group # 消费者组名称
+      transactionProducerGroupName: order_trans_group_name # 事务生产者组名称
+      producerInstanceName: user_producer_instance # 生产者实例名称
+      consumerInstanceName: user_consumer_instance # 消费者实例名称
+      producerTransInstanceName: user_producer_tranc # 事务生产者实例名称
+      consumerBatchMaxSize: 1 # 一次最大消费多少数量数据
+      consumerBroadcasting: false # 广播消息
+      subscribe[0]: user_topic:white # 消费者topic:tag
+      enableHistoryConsumer: false # 启动时，是否允许消费历史消息
+      enableOrderConsumer: false # 启动消费顺序
