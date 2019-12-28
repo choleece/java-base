@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="eventBean" class="cn.choleece.base.framework.spring.event.SpringEventTest.SpringEventBean">
+        <property name="message" value="hello, choleece"/>
+    </bean>
+
+    <bean id="refreshEvent" class="cn.choleece.base.framework.spring.event.SpringEventTest.ContextRefreshEventBean"/>
+
+    <bean id="startEvent" class="cn.choleece.base.framework.spring.event.SpringEventTest.ContextStartEventBean"/>
+
+    <bean id="stopEvent" class="cn.choleece.base.framework.spring.event.SpringEventTest.ContextStopEventBean"/>
+
+    <bean id="closeEvent" class="cn.choleece.base.framework.spring.event.SpringEventTest.ContextClosedEventBean"/>
+</beans>
