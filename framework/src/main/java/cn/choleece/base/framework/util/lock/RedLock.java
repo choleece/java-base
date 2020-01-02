@@ -1,10 +1,6 @@
 package cn.choleece.base.framework.util.lock;
 
-import cn.choleece.base.framework.redis.core.RedisCallback;
-import cn.choleece.base.framework.template.CusRedisTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import redis.clients.jedis.JedisCommands;
 
 import java.util.UUID;
 
@@ -17,8 +13,6 @@ import java.util.UUID;
  **/
 @Component
 public class RedLock implements Lock {
-    @Autowired
-    private CusRedisTemplate cusRedisTemplate;
 
     /**
      * redis key
@@ -56,15 +50,6 @@ public class RedLock implements Lock {
     @Override
     public void lock() {
         while (true) {
-            RedisCallback<String> callback = (connection) -> {
-                JedisCommands commands = (JedisCommands) connection.getNativeConnection();
-                return commands.set(LOCK_KEY,LOCK_VALUE, NOT_EXIST, SECONDS, 100);
-            };
-            Object result = cusRedisTemplate.execute(callback);
-
-            if (OK.equals(result)) {
-                return;
-            }
         }
     }
 
