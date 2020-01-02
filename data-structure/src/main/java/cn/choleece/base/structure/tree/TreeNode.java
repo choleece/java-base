@@ -109,7 +109,7 @@ public class TreeNode {
     }
 
     /**
-     * BSP代码模版（广度优先搜索）此处的TreeNode可以换成图等数据结构
+     * BSF代码模版（广度优先搜索）此处的TreeNode可以换成图等数据结构
      * @param root
      */
     public static void bfs(TreeNode root) {
