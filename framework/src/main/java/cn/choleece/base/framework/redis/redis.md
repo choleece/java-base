@@ -27,3 +27,8 @@ Redis 官网：https://redis.io/
 ```
 1. https://www.jianshu.com/p/f4a7775bc4a9
 ```
+
+## 各指令用途
+```
+http://doc.redisfans.com/string/setbit.html
+```

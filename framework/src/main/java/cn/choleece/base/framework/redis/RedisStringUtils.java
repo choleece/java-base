@@ -11,11 +11,27 @@ public class RedisStringUtils {
     static Jedis jedis = RedisConfig.jedis;
 
     public static void main(String[] args) {
-        append("name", "choleece");
+//        setVal("name", "chaoli");
+//
+//        append("name", "choleece");
+//
+//        strLength("name");
+//
+//        getRange("name", 1L, 4L);
 
-        strLength("name");
+//        setExpireVal("sex", "chaoli", "NX", "EX", 10L);
 
-        getRange("name", 1L, 4L);
+//        mset("name", "chaoli", "sex", "male");
+
+//        msetNx("name1", "chaoli", "sex1", "male");
+
+//        incr("mykey");
+
+//        incrBy("mykey", 5);
+
+//        incrByFloat("mykey", 5);
+
+        getset("mykey", "choleece");
     }
 
     /**
@@ -67,5 +83,153 @@ public class RedisStringUtils {
         System.out.println(range);
 
         return range;
+    }
+
+    /**
+     * 普通的设置key 会将原有key进行覆盖
+     * @param key
+     * @param val
+     */
+    public static String setVal(String key, String val) {
+        String resultSet = jedis.set(key, val);
+
+        System.out.println(resultSet);
+
+        return resultSet;
+    }
+
+    /**
+     * set 参数
+     * @param key
+     * @param val
+     * @param nxxx NX代表不存在时操作，XX代表存在时操作
+     * @param exPx EX 代表单位为second;px为mill second
+     * @param time
+     * @return 操纵成功，返回OK，操纵失败,发挥null
+     */
+    public static String setExpireVal(String key, String val, String nxxx, String exPx, Long time) {
+        String exPxResult = jedis.set(key, val, nxxx, exPx, time);
+
+        System.out.println("exPxResult: " + exPxResult);
+
+        return exPxResult;
+    }
+
+    /**
+     * 多个key,value一起设置，会覆盖已存在的key
+     * @param key1
+     * @param val1
+     * @param key2
+     * @param val2
+     * @return
+     */
+    public static String mset(String key1, String val1, String key2, String val2) {
+        String msetResult = jedis.mset(key1, val1, key2, val2);
+
+        System.out.println("msetResult: " + msetResult);
+
+        return msetResult;
+    }
+
+    /**
+     * 多个key,value一起设置，会覆盖已存在的key
+     * @param key1
+     * @param val1
+     * @param key2
+     * @param val2
+     * @return 1 if the all the keys were set.
+     *         0 if no key was set (at least one key already existed).
+     */
+    public static Long msetNx(String key1, String val1, String key2, String val2) {
+        Long msetResult = jedis.msetnx(key1, val1, key2, val2);
+
+        System.out.println("msetResult: " + msetResult);
+
+        return msetResult;
+    }
+
+    /**
+     * 针对key进行自增
+     * @param mykey
+     * @return
+     */
+    public static Long incr(String mykey) {
+        Long incr = jedis.incr(mykey);
+
+        System.out.println("incr: " + incr);
+
+        return incr;
+    }
+
+    /**
+     * 根据设置的步长来进行递增
+     * @param key
+     * @param step
+     * @return
+     */
+    public static Long incrBy(String key, int step) {
+        Long r = jedis.incrBy(key, step);
+
+        System.out.println("incrBy: " + r);
+
+        return r;
+    }
+
+    /**
+     * 根据设置的步长来进行递增
+     * @param key
+     * @param step
+     * @return
+     */
+    public static Double incrByFloat(String key, double step) {
+        Double r = jedis.incrByFloat(key, step);
+
+        System.out.println("incrBy: " + r);
+
+        return r;
+    }
+
+    /**
+     * 先获取一个值，然后再将key用val覆盖
+     * @param key
+     * @param val
+     * @return
+     */
+    public static String getset(String key, String val) {
+        String r = jedis.getSet(key, val);
+
+        System.out.println("get set: " + r);
+
+        return r;
+    }
+
+    /**
+     * 改变指定位置的bit位的值 每一个字符是一个acs 码值
+     * @param key
+     * @param offset
+     * @param val
+     * @return
+     */
+    public static Boolean setbit(String key, long offset, boolean val) {
+        Boolean r = jedis.setbit(key, offset, val);
+
+        System.out.println("r: " + r);
+
+        return r;
+    }
+
+    /**
+     * 常用于统计统计网站的上线频率，比如签到，签到了就设置为1
+     * 统计key对应的value里，bit为1的位
+     * @param key
+     * @return
+     * https://www.cnblogs.com/liujiduo/p/10396020.html
+     */
+    public static Long bitcount(String key) {
+        Long r = jedis.bitcount(key);
+
+        System.out.println("r: " + r);
+
+        return r;
     }
 }
