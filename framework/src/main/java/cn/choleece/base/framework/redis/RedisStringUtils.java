@@ -1,5 +1,6 @@
 package cn.choleece.base.framework.redis;
 
+import redis.clients.jedis.BitOP;
 import redis.clients.jedis.Jedis;
 
 /**
@@ -227,6 +228,36 @@ public class RedisStringUtils {
      */
     public static Long bitcount(String key) {
         Long r = jedis.bitcount(key);
+
+        System.out.println("r: " + r);
+
+        return r;
+    }
+
+    /**
+     * 返回key对应的 val里第一个0或者1的位置
+     * @param key
+     * @param val
+     * @return
+     */
+    public static Long bitpos(String key, boolean val) {
+        Long r = jedis.bitpos(key, val);
+
+        System.out.println("r: " + r);
+
+        return r;
+    }
+
+    /**
+     * 针对key1, key2进行op操作，AND OR XOR NOT，将新的结果放到destKey里
+     * @param op
+     * @param destKey
+     * @param key1
+     * @param key2
+     * @return
+     */
+    public static Long bitop(BitOP op, String destKey, String key1, String key2) {
+        Long r = jedis.bitop(op, destKey, key1, key2);
 
         System.out.println("r: " + r);
 
