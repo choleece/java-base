@@ -52,15 +52,17 @@ public class ZkLock implements Lock {
     }
 
     @Override
-    public void lock() {
+    public Boolean lock(String randomId) {
         if (!tryLock()) {
             // 对最小节点进行监听
             waitForLock();
 
-            lock();
+            lock(randomId);
         } else {
             logger.info(Thread.currentThread().getName() + " 获得分布式锁！");
         }
+
+        return true;
     }
 
     public boolean tryLock() {
@@ -125,8 +127,10 @@ public class ZkLock implements Lock {
     }
 
     @Override
-    public void unlock() {
+    public Boolean unlock(String randomId) {
         // 释放锁，删除节点
         zkClient.delete(currentPath);
+
+        return true;
     }
 }

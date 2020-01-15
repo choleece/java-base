@@ -7,8 +7,8 @@ package cn.choleece.base.framework.util.lock;
  **/
 public interface Lock {
 
-    void lock();
+    Boolean lock(String randomId);
 
-    void unlock();
+    Boolean unlock(String randomId);
 
 }
