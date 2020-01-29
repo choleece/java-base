@@ -54,3 +54,8 @@ def divide_conquer(problem, param1, param2, ...):
 
     # process and generate the final result
     result = process_result(sub_result1, sub_result2, ...)
+
+### 动态规划  dynamic program
+1. 建立状态转移方程
+2. 缓存并复用以往结果
+3. 按顺序从小到大算
