@@ -19,19 +19,29 @@ public class Solution62 {
         // 从小开始进行
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
-                if (i == 0 || j == 0) {
-                    paths[i][j] = 1;
-                } else {
-                    // 进行状态转移方程: path(n)(m) = path(n)f(m - 1) + path(n - 1)(m)
-                    paths[i][j] = paths[i][j - 1] + paths[i - 1][j];
-                }
+                // 进行状态转移方程: path(n)(m) = path(n)f(m - 1) + path(n - 1)(m)
+                paths[i][j] = (i == 0 || j == 0) ? 1 : paths[i][j - 1] + paths[i - 1][j];
             }
         }
 
         return paths[m - 1][n - 1];
     }
 
+    public static int uniquePathsWithRecursion(int m, int n) {
+
+        if (m < 0 || n < 0) {
+            return 0;
+        }
+
+        if (m == 0 || n == 0) {
+            return 1;
+        }
+        return uniquePathsWithRecursion(m, n - 1) + uniquePathsWithRecursion(m - 1, n);
+    }
+
     public static void main(String[] args) {
         System.out.println("total paths: " + uniquePaths(1, 1));
+
+        System.out.println("total paths with recursion: " + uniquePathsWithRecursion(1, 1));
     }
 }
