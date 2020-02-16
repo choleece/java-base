@@ -1,4 +1,4 @@
-package cn.choleece.base.leetcode.solution;
+package cn.choleece.base.leetcode.solution.divideconquer;
 
 import java.util.Arrays;
 import java.util.PriorityQueue;

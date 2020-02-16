@@ -1,4 +1,4 @@
-package cn.choleece.base.leetcode.solution;
+package cn.choleece.base.leetcode.solution.arrays;
 
 import java.util.HashMap;
 import java.util.Map;
