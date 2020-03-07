@@ -54,6 +54,13 @@ public class RedLock implements Lock {
      * 方法返回代表获取到锁了
      *
      * 思考点：如果任务执行时间超过锁过期的时间？（考虑开启一个任务，定时刷新锁的过期时间，保证原子行，使用lua 脚本进行刷新）
+     *
+     * https://blog.csdn.net/wutengfei_java/article/details/100699538
+     *
+     * 具体使用可以参考redisson 实现，开启一个类似于看门狗的线程，针对锁进行续期
+     *
+     * cluster 或者 master-slave架构的分布式锁，会存在一个问题，client1 获取锁成功，在从master复制到slave的时候，master宕机，
+     * 但是此时client1以为获取到了锁，此时client2去新的master获取锁，也获得了，这个时候业务可能产生脏数据
      */
     @Override
     public Boolean lock(String randomId) {
