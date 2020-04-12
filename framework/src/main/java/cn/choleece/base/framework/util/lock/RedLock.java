@@ -1,7 +1,9 @@
 package cn.choleece.base.framework.util.lock;
 
 import cn.choleece.base.framework.redis.RedisConfig;
+import cn.choleece.base.framework.redis.poll.RedisPoolConfig;
 import org.springframework.stereotype.Component;
+import redis.clients.jedis.Jedis;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -17,6 +19,8 @@ import java.util.UUID;
  **/
 @Component
 public class RedLock implements Lock {
+
+    public static RedisPoolConfig poolConfig = new RedisPoolConfig();
 
     /**
      * redis key
@@ -35,7 +39,7 @@ public class RedLock implements Lock {
      */
     private static final String SECONDS = "EX";
 
-    private static final Long TRY_LOCK_TIMEOUT = 5L * 1000;
+    private static final Long TRY_LOCK_TIMEOUT = 10L * 1000;
 
     /**
      * KEY 自动过期时间
@@ -67,20 +71,28 @@ public class RedLock implements Lock {
 
         Long startTime = System.currentTimeMillis();
 
-        while (true) {
-            if (System.currentTimeMillis() - startTime > TRY_LOCK_TIMEOUT) {
-                return false;
-            }
+        Jedis jedis = poolConfig.getJedis();
+        try {
+            while (true) {
+                if (System.currentTimeMillis() - startTime > TRY_LOCK_TIMEOUT) {
+                    System.out.println(randomId + "获取锁超时...");
+                    return false;
+                }
 
-           if (OK.equals(RedisConfig.jedis.set(LOCK_KEY, randomId, NOT_EXIST, SECONDS, TIME_OUT))) {
-               return true;
-            }
+                if (OK.equals(jedis.set(LOCK_KEY, randomId, NOT_EXIST, SECONDS, TIME_OUT))) {
+                    System.out.println(randomId + "获取锁成功...");
+                    return true;
+                }
 
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                System.out.println(randomId + "重新尝试获取锁...");
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
+        } finally {
+            jedis.close();
         }
     }
 
@@ -93,10 +105,17 @@ public class RedLock implements Lock {
                 "return 0 " +
                 "end";
 
-        if (STR_1.equals(RedisConfig.jedis.eval(checkAndDelScript,
-                Collections.singletonList(LOCK_KEY), Collections.singletonList(randomId)))) {
-            return true;
+        Jedis jedis = poolConfig.getJedis();
+        try {
+            if (STR_1.equals(jedis.eval(checkAndDelScript,
+                    Collections.singletonList(LOCK_KEY), Collections.singletonList(randomId)).toString())) {
+                System.out.println(randomId + "释放锁成功...");
+                return true;
+            }
+            System.out.println(randomId + "释放锁失败");
+            return false;
+        } finally {
+            jedis.close();
         }
-        return false;
     }
 }

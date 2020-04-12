@@ -7,8 +7,18 @@ package cn.choleece.base.framework.util.lock;
  **/
 public interface Lock {
 
+    /**
+     * 获取锁
+     * @param randomId
+     * @return
+     */
     Boolean lock(String randomId);
 
+    /**
+     * 释放锁
+     * @param randomId
+     * @return
+     */
     Boolean unlock(String randomId);
 
 }
