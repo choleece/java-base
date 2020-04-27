@@ -28,3 +28,15 @@ spring:
         wall:
           config:
             multi-statement-allow: true
+
+
+redis:
+  jedis:
+    host: 127.0.0.1
+    port: 6379
+    timeout: 3000
+    maxTotal: 1024
+    maxIdle: 100
+    maxWaitMills: 10000
+    testOnBorrow: false
+    testOnReturn: true
