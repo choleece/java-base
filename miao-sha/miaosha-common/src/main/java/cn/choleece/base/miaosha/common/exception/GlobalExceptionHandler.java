@@ -13,8 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = Exception.class)
-    public String defaultRestException(Exception ex) {
-        ex.printStackTrace();
+    public R defaultRestException(Exception ex) {
         return R.error();
     }
 }

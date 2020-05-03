@@ -1,6 +1,7 @@
 package cn.choleece.base.miaosha.common.config;
 
 import lombok.Data;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -10,7 +11,8 @@ import org.springframework.stereotype.Component;
  * @Date 2020-04-27 07:33
  **/
 @Component
-@ConfigurationProperties(prefix = "reids.jedis")
+@ConfigurationProperties(prefix = "redis.jedis")
+@ConditionalOnProperty(prefix = "redis.jedis", value = "host")
 @Data
 public class JedisPoolProperty {
 
@@ -22,7 +24,7 @@ public class JedisPoolProperty {
 
     private int maxTotal;
 
-    private int maxIdel;
+    private int maxIdle;
 
     private int maxWaitMills;
 

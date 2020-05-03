@@ -37,6 +37,6 @@ redis:
     timeout: 3000
     maxTotal: 1024
     maxIdle: 100
-    maxWaitMills: 10000
-    testOnBorrow: false
+    maxWaitMills: 1000
+    testOnBorrow: true
     testOnReturn: true

@@ -1,7 +1,5 @@
 package cn.choleece.base.miaosha.common.util;
 
-import com.alibaba.fastjson.JSON;
-
 import java.io.Serializable;
 
 /**
@@ -13,42 +11,40 @@ public class R  implements Serializable {
 
     private static final long serialVersionUID = -6287952131441663819L;
 
-    public static class Result {
-        private int code;
+    private int code;
 
-        private String msg;
+    private String msg;
 
-        private Object data;
+    private Object data;
 
-        public int getCode() {
-            return code;
-        }
+    public int getCode() {
+        return code;
+    }
 
-        public void setCode(int code) {
-            this.code = code;
-        }
+    public void setCode(int code) {
+        this.code = code;
+    }
 
-        public String getMsg() {
-            return msg;
-        }
+    public String getMsg() {
+        return msg;
+    }
 
-        public void setMsg(String msg) {
-            this.msg = msg;
-        }
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
 
-        public Object getData() {
-            return data;
-        }
+    public Object getData() {
+        return data;
+    }
 
-        public void setData(Object data) {
-            this.data = data;
-        }
+    public void setData(Object data) {
+        this.data = data;
     }
 
     /**
      * 服务器返回成功码
      */
-    private static final int SUCCESS_CODE = 0;
+    public static final int SUCCESS_CODE = 0;
 
     /**
      * 服务器返回失败码
@@ -60,18 +56,18 @@ public class R  implements Serializable {
      */
     private static final String SUCCESS_MSG = "操作成功";
 
-    public static String error(int code, String msg) {
-        Result result = new Result();
+    public static R error(int code, String msg) {
+        R result = new R();
         result.setCode(code);
         result.setMsg(msg);
-        return JSON.toJSONString(result);
+        return result;
     }
 
-    public static String error(String msg) {
+    public static R error(String msg) {
         return error(ERROR_CODE, msg);
     }
 
-    public static String error() {
+    public static R error() {
         return error("服务器开小差了...");
     }
 
@@ -81,12 +77,12 @@ public class R  implements Serializable {
      * @param object
      * @return {"code": 0, "msg": msg, "data": object}
      */
-    public static String ok(String msg, Object object) {
-        Result result = new Result();
+    public static R ok(String msg, Object object) {
+        R result = new R();
         result.setCode(SUCCESS_CODE);
         result.setMsg(msg);
         result.setData(object);
-        return JSON.toJSONString(result);
+        return result;
     }
 
     /**
@@ -94,7 +90,7 @@ public class R  implements Serializable {
      * @param object
      * @return {"code": 0, "data": null}
      */
-    public static String ok(Object object) {
+    public static R ok(Object object) {
         return ok(SUCCESS_MSG, object);
     }
 
@@ -102,9 +98,9 @@ public class R  implements Serializable {
      * 返回不带msg的结果
      * @return {"code": 0}
      */
-    public static String ok() {
-        Result result = new Result();
+    public static R ok() {
+        R result = new R();
         result.setCode(SUCCESS_CODE);
-        return JSON.toJSONString(result);
+        return result;
     }
 }
