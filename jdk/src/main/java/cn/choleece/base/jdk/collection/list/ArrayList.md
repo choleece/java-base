@@ -4,7 +4,7 @@
 // 这三个接口为标记接口， 还有一个(java.rmi.Remote)，没有具体的属性和方法，是一种设计思想，Java中的一个标记接口表示的的是一种类的特性，实现了该标记接口的类则具有该特性
 public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 
-// 可随机存取，可对对象内包含对元素进行随机存取，时间复杂度为O(1)
+// 可随机存取，可对对象内包含对元素进行随机存取，时间复杂度为O(1)， 数组的初始化如果没有指定大小，默认是个空数组，属于懒初始化
 public interface RandomAccess {
 }
 
