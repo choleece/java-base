@@ -50,8 +50,37 @@ public class Solution17 {
         return result;
     }
 
+    public static List<String> letterCombinations20200524(String digits) {
+        List<String> result = new LinkedList<>();
+
+        if (digits == null || digits.length() == 0) {
+            return result;
+        }
+
+        backtrack20200524("", digits, result);
+
+        return result;
+    }
+
+    public static void backtrack20200524(String combination, String nextDigits, List<String> result) {
+        // termination
+        if (nextDigits.length() == 0) {
+            result.add(combination);
+            return;
+        }
+
+        // choose one add to track
+        String digit = nextDigits.substring(0, 1);
+        List<Character> letters = DIC_MAP.get(digit);
+        for (Character c : letters) {
+            backtrack20200524(combination + c, nextDigits.substring(1), result);
+        }
+        // unchose
+    }
+
     public static void main(String[] args) {
         String digits = "234";
-        System.out.printf("result: " + letterCombinations(digits));
+        System.out.println("result: " + letterCombinations(digits));
+        System.out.println("result: " + letterCombinations20200524(digits));
     }
 }
