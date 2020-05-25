@@ -1,8 +1,6 @@
 package cn.choleece.base.jdk.collection.queue;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author choleece
@@ -13,6 +11,7 @@ public class QueueClient {
 
     public static void main(String[] args) {
         BlockingQueue<String> blockingQueue = new ArrayBlockingQueue(4);
+
         try {
             blockingQueue.put("444");
             blockingQueue.put("444");
