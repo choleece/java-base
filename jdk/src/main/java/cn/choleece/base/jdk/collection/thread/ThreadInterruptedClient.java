@@ -2,7 +2,8 @@ package cn.choleece.base.jdk.collection.thread;
 
 /**
  * @author choleece
- * @Description: TODO
+ * @Description: 线程中断
+ * http://note.youdao.com/noteshare?id=2852da2cc6eda3876820b8b38be69b5d
  * @Date 2020-05-30 12:07
  **/
 public class ThreadInterruptedClient {

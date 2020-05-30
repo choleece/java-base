@@ -3,6 +3,7 @@ package cn.choleece.base.jdk.collection.thread;
 /**
  * @author choleece
  * @Description: 多线程测试
+ * http://note.youdao.com/noteshare?id=db9760505aced233f4aba952037fc978
  * @Date 2020-05-24 11:40
  **/
 public class ThreadClient {
