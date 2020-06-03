@@ -5,6 +5,7 @@ import java.util.concurrent.CountDownLatch;
 /**
  * @author choleece
  * @Description: CountDownLatch
+ * http://note.youdao.com/noteshare?id=a6ad1ad3ac7254b9e609282df1f0264e
  * @Date 2020-06-01 23:13
  **/
 public class CountDownLatchClient {
