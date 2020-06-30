@@ -18,6 +18,8 @@ public class FutureTaskClient {
 
         new Thread(future).start();
 
+        System.out.println("我在这里阔以做很多事情，，，，，future只是等待返回结果");
+
         System.out.println(future.get());
 
         System.out.println("我会被阻塞嘛...");

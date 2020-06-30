@@ -3,6 +3,10 @@
 
 2. https://crossoverjie.top/JCSprout/#/jvm/MemoryAllocation
 
+3. https://juejin.im/post/5b8d08a051882528b34ea466
+
+4. https://wangkang007.gitbooks.io/jvm/content/la_ji_shou_ji_qi.html
+
 ## Java 基本类型占内存大小
 1. 整型
 
