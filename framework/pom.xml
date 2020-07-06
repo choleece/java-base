@@ -20,7 +20,6 @@
         <jackson>2.9.9</jackson>
         <spring>5.1.9.RELEASE</spring>
         <zk.version>0.11</zk.version>
-        <kafka.version>2.3.0</kafka.version>
         <mysql-con-version>5.1.47</mysql-con-version>
     </properties>
 
@@ -76,19 +75,6 @@
             <groupId>com.101tec</groupId>
             <artifactId>zkclient</artifactId>
             <version>${zk.version}</version>
-        </dependency>
-
-        <!--   kafka    -->
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
         </dependency>
 
         <dependency>

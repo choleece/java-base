@@ -21,6 +21,8 @@
         <module>io</module>
         <module>db</module>
         <module>jdk</module>
+        <module>middle-ware</module>
+        <module>middle-ware/md-kafka</module>
     </modules>
 
     <properties>
