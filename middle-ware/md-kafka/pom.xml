@@ -11,7 +11,7 @@
 
     <properties>
         <kafka-version>2.3.0</kafka-version>
-        <spring-kafka-version>2.5.3.RELEASE</spring-kafka-version>
+        <spring-kafka-version>2.3.9.RELEASE</spring-kafka-version>
     </properties>
 
     <artifactId>md-kafka</artifactId>
