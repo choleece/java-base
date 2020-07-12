@@ -1,0 +1,8 @@
+choleece:
+  zookeeper:
+    curator:
+      server: 127.0.0.1:2181 # zk地址
+      sessionTimeoutMs: 2000 # session超时时间
+      connectionTimeoutMs: 2000 # 连接超时时间
+      maxRetries: 5 # 最大重试次数
+      sleepMsBetweenRetries: 1000  #重试间隔时间

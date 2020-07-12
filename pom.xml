@@ -23,6 +23,7 @@
         <module>jdk</module>
         <module>middle-ware</module>
         <module>middle-ware/md-kafka</module>
+        <module>middle-ware/md-zookeeper</module>
     </modules>
 
     <properties>
