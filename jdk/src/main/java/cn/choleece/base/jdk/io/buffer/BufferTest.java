@@ -1,6 +1,4 @@
-package cn.choleece.base.io.buffer;
-
-import java.nio.Buffer;
+package cn.choleece.base.jdk.io.buffer;
 
 /**
  * @author choleece
