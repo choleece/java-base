@@ -7,6 +7,10 @@ package cn.choleece.base.springsource.ioc.service;
  **/
 public interface IMessageService {
 
+    /**
+     * 获取消息
+     * @return
+     */
     String getMessage();
 
 }

@@ -12,6 +12,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
  **/
 public class MessageServiceImpl implements IMessageService, BeanFactoryPostProcessor {
 
+    @Override
     public String getMessage() {
         return "hello world";
     }
@@ -21,6 +22,7 @@ public class MessageServiceImpl implements IMessageService, BeanFactoryPostProce
      * @param configurableListableBeanFactory
      * @throws BeansException
      */
+    @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory configurableListableBeanFactory) throws BeansException {
         System.out.println("重启初始化后，会执行这个方法");
     }
