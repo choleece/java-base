@@ -14,13 +14,10 @@
     <description>Java 常用框架、中间件等</description>
 
     <properties>
-        <spring-boot-version>2.1.8.RELEASE</spring-boot-version>
         <commons-pool2-version>2.2</commons-pool2-version>
         <jedis>2.9.3</jedis>
         <jackson>2.9.9</jackson>
-        <spring>5.1.9.RELEASE</spring>
         <zk.version>0.11</zk.version>
-        <mysql-con-version>5.1.47</mysql-con-version>
     </properties>
 
     <dependencies>
@@ -67,7 +64,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-tx</artifactId>
-            <version>${spring}</version>
+            <version>${spring-version}</version>
         </dependency>
 
         <!-- zookeeper -->
@@ -86,7 +83,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>5.1.10.RELEASE</version>
+            <version>${spring-version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.mybatis/mybatis -->

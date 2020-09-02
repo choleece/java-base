@@ -9,11 +9,6 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <properties>
-        <kafka-version>2.3.0</kafka-version>
-        <spring-kafka-version>2.3.9.RELEASE</spring-kafka-version>
-    </properties>
-
     <artifactId>md-kafka</artifactId>
 
     <dependencies>

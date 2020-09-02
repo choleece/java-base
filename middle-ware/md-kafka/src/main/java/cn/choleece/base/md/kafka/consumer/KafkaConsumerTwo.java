@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
  * @Date 2020-07-05 16:21
  **/
 @Component
-public class KafkaConsumer {
+public class KafkaConsumerTwo {
 
-    @KafkaListener(topics = "test-group")
+    @KafkaListener(topics = "test-group", groupId = "group-2")
     public void processMessage(String message) {
-        System.out.println("Received sample message [" + message + "] I am the consumer 1");
+        System.out.println("Received sample message [" + message + "]  I am the consumer 2");
     }
 }

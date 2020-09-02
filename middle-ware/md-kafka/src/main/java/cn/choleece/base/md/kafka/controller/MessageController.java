@@ -22,9 +22,13 @@ public class MessageController {
 
     @PostMapping("/")
     public String sendMessage() {
+        try {
 
-        producer.send(new SampleMessage(System.currentTimeMillis(), String.format("test message " + new Random().nextInt())));
+            producer.send(new SampleMessage(System.currentTimeMillis(), String.format("test message " + new Random().nextInt())).toString());
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return "ok";
     }
 }

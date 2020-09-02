@@ -1,6 +1,5 @@
 package cn.choleece.base.springboot;
 
-import cn.choleece.base.springboot.autoconfig.redis.properties.RedisConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
