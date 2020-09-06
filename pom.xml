@@ -38,6 +38,7 @@
         <kafka-version>2.3.0</kafka-version>
         <spring-kafka-version>2.3.9.RELEASE</spring-kafka-version>
         <spring-version>5.2.7.RELEASE</spring-version>
+        <guava-version>23.0</guava-version>
     </properties>
 
     <dependencies>
