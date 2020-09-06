@@ -1,0 +1,10 @@
+redis:
+  jedis:
+    host: 127.0.0.1
+    port: 6379
+    timeout: 3000
+    maxTotal: 1024
+    maxIdle: 100
+    maxWaitMills: 1000
+    testOnBorrow: true
+    testOnReturn: true

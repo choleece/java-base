@@ -29,14 +29,26 @@ spring:
           config:
             multi-statement-allow: true
 
-
-redis:
-  jedis:
+  redis:
     host: 127.0.0.1
     port: 6379
-    timeout: 3000
-    maxTotal: 1024
-    maxIdle: 100
-    maxWaitMills: 1000
-    testOnBorrow: true
-    testOnReturn: true
+    database: 0
+    jedis:
+      pool:
+        max-active: 100
+        max-idle: 8
+        min-idle: 0
+
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: group-id
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      producer:
+        bootstrap-servers: localhost:9092
+        value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+kafka:
+  topic: miaosha

@@ -11,7 +11,7 @@ import org.springframework.context.annotation.ComponentScan;
  * @Date 2020-04-25 22:48
  **/
 @SpringBootApplication
-@ComponentScan(basePackages = "cn.choleece.base.miaosha")
+@ComponentScan(basePackages = "cn.choleece.base")
 @MapperScan(basePackages = "cn.choleece.base.miaosha.*.mapper")
 public class CommonApplication {
 

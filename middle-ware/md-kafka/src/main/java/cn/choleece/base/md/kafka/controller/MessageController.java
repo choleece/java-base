@@ -24,7 +24,7 @@ public class MessageController {
     public String sendMessage() {
         try {
 
-            producer.send(new SampleMessage(System.currentTimeMillis(), String.format("test message " + new Random().nextInt())).toString());
+            producer.send("test-topic", new SampleMessage(System.currentTimeMillis(), String.format("test message " + new Random().nextInt())).toString());
 
         } catch (Exception e) {
             e.printStackTrace();

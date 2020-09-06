@@ -1,17 +1,17 @@
-package cn.choleece.base.md.kafka.consumer;
+package cn.choleece.base.miaosha.common.kafka;
 
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 /**
  * @author choleece
- * @Description: kafka 消费者
- * @Date 2020-07-05 16:21
+ * @Description: miao sha order kafka consumer
+ * @Date 2020-09-06 16:37
  **/
 @Component
-public class KafkaConsumer {
+public class OrderConsumer {
 
-    @KafkaListener(topics = "test-group")
+    @KafkaListener(topics = "miaosha")
     public void processMessage(String message) {
         System.out.println("Received sample message [" + message + "] I am the consumer 1");
     }

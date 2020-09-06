@@ -21,7 +21,7 @@ public class RedisStringUtils {
 //
 //        getRange("name", 1L, 4L);
 
-        setExpireVal("sex", "chaoli", "NX", "EX", 10L);
+//        setExpireVal("sex", "chaoli", "NX", "EX", 10L);
 
 //        mset("name", "chaoli", "sex", "male");
 
@@ -34,6 +34,7 @@ public class RedisStringUtils {
 //        incrByFloat("mykey", 5);
 
 //        getset("mykey", "choleece");
+        System.out.println(getString("name"));
     }
 
     /**

@@ -1,17 +1,15 @@
 package cn.choleece.base.miaosha.web.controller;
 
+import cn.choleece.base.md.redis.distribute.annotation.SpringControllerLimit;
 import cn.choleece.base.miaosha.common.base.BaseController;
-import cn.choleece.base.miaosha.common.controller.param.CreateOrderParam;
-import cn.choleece.base.miaosha.common.service.IMiaoshaOrderService;
-import cn.choleece.base.miaosha.common.util.R;
-import cn.choleece.base.miaosha.common.util.ratelimit.RateLimit;
-import com.alibaba.fastjson.JSONObject;
+import cn.choleece.base.miaosha.common.service.IStockOrderService;
+import cn.choleece.base.miaosha.common.service.IStockService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
 
 /**
  * @author choleece
@@ -22,62 +20,118 @@ import javax.validation.Valid;
 @RequestMapping("/miaosha")
 @Slf4j
 public class MiaoShaController extends BaseController {
+
+    private static final Logger logger = LoggerFactory.getLogger(MiaoShaController.class);
+
     @Resource
-    private RateLimit rateLimit;
-    @Autowired
-    private IMiaoshaOrderService miaoshaOrderService;
+    private IStockService stockService;
+    @Resource
+    private IStockOrderService orderService;
 
+    @RequestMapping("/health")
+    public String health() {
+        logger.info("heath");
+        return "OK";
+    }
 
-    @GetMapping("")
-    public R miaosha() {
-        System.out.println(Thread.currentThread().getName());
-        if (rateLimit.acquire("limit", 10)) {
-            // todo 缓存内减少订单
-            return R.ok();
+    @RequestMapping("/getStockNum")
+    public String getStockNum(@RequestParam Integer sid) {
+        int currentCount = 0;
+        try {
+            currentCount = stockService.getStockCount(sid);
+        } catch (Exception e) {
+            logger.error("Exception",e);
         }
-        return R.error("你被限流了....");
+        logger.info("currentCount={}", currentCount);
+        return String.valueOf(currentCount);
+    }
+
+
+    @RequestMapping("/createWrongOrder/{sid}")
+    public String createWrongOrder(@PathVariable int sid) {
+        logger.info("sid=[{}]", sid);
+        int id = 0;
+        try {
+            id = orderService.createWrongOrder(sid);
+        } catch (Exception e) {
+            logger.error("Exception",e);
+        }
+        return String.valueOf(id);
+    }
+
+
+    /**
+     * 乐观锁更新库存
+     * @param sid
+     * @return
+     */
+    @RequestMapping("/createOptimisticOrder/{sid}")
+    public String createOptimisticOrder(@PathVariable int sid) {
+        logger.info("sid=[{}]", sid);
+        int id = 0;
+        try {
+            id = orderService.createOptimisticOrder(sid);
+        } catch (Exception e) {
+            logger.error("Exception",e);
+        }
+        return String.valueOf(id);
     }
 
     /**
-     * 此方法会导致超卖
-     * @param createOrderModel
+     * 乐观锁更新库存 限流
+     * @param sid
      * @return
      */
-    @PostMapping("/order/nothing")
-    public R orderWithNothing(@RequestBody @Valid CreateOrderParam createOrderModel) {
-        log.info("create miaosha order with nothing... params {}", createOrderModel.toString());
-        return miaoshaOrderService.createOrder(createOrderModel);
+    @SpringControllerLimit(errorCode = 200)
+    @RequestMapping("/createOptimisticLimitOrder/{sid}")
+    @ResponseBody
+    public String createOptimisticLimitOrder(@PathVariable int sid) {
+        logger.info("sid=[{}]", sid);
+        int id = 0;
+        try {
+            id = orderService.createOptimisticOrder(sid);
+        } catch (Exception e) {
+            logger.error("Exception",e);
+        }
+        return String.valueOf(id);
     }
 
-    @PostMapping("/order/db/lock/pessimistic")
-    public R orderWithDbLock(@RequestBody @Valid CreateOrderParam createOrderModel) {
-        log.info("create miaosha order with db lock... params {}", createOrderModel.toString());
-
-        return miaoshaOrderService.createOrderWithPessimisticDbLock(createOrderModel);
+    /**
+     * 乐观锁更新库存 限流 库存改为查询 Redis 提高性能
+     * @param sid
+     * @return
+     */
+    @SpringControllerLimit(errorCode = 200,errorMsg = "request has limited")
+    @RequestMapping("/createOptimisticLimitOrderByRedis/{sid}")
+    @ResponseBody
+    public String createOptimisticLimitOrderByRedis(@PathVariable int sid) {
+        logger.info("sid=[{}]", sid);
+        int id = 0;
+        try {
+            id = orderService.createOptimisticOrderUseRedis(sid);
+        } catch (Exception e) {
+            logger.error("Exception",e);
+        }
+        return String.valueOf(id);
     }
 
-    @PostMapping("/order/db/lock/lucky")
-    public R orderWithDbLuckyLock(@RequestBody @Valid CreateOrderParam createOrderModel) throws Exception {
-        log.info("create miaosha order with db lucky lock... params {}", createOrderModel.toString());
-
-        return miaoshaOrderService.createOrderWithPessimisticDbLuckyLock(createOrderModel);
-    }
-
-    @PostMapping("/order/redis")
-    public R orderWithRedis(@RequestBody @Valid CreateOrderParam createOrderModel) throws Exception {
-        log.info("create miaosha order with redis... params {}", createOrderModel.toString());
-
-        return miaoshaOrderService.createOrderWithRedis(createOrderModel);
-    }
-
-    public static void main(String[] args) {
-        CreateOrderParam orderModel = new CreateOrderParam();
-        orderModel.setGoodsId(3L);
-        orderModel.setDeliveryAddrId(1L);
-        orderModel.setGoodsCount(2);
-        orderModel.setGoodsId(3L);
-        orderModel.setUserId(1L);
-
-        System.out.println(JSONObject.toJSONString(orderModel));
+    /**
+     * 乐观锁更新库存 限流 库存改为查询 Redis 提高性能
+     * 异步创建订单 Kafka
+     * @param sid
+     * @return
+     */
+    @SpringControllerLimit
+    @RequestMapping("/createOptimisticLimitOrderByRedisAndKafka/{sid}")
+    @ResponseBody
+    public String createOptimisticLimitOrderByRedisAndKafka(@PathVariable int sid) {
+        logger.info("sid=[{}]", sid);
+        int id = 0;
+        try {
+            orderService.createOptimisticOrderUseRedisAndKafka(sid);
+        } catch (Exception e) {
+            logger.error("Exception",e);
+        }
+        return String.valueOf(id);
     }
 }

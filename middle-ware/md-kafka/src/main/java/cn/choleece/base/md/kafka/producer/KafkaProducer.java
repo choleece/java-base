@@ -1,15 +1,12 @@
 package cn.choleece.base.md.kafka.producer;
 
-import cn.choleece.base.md.kafka.message.SampleMessage;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 
+import javax.annotation.Resource;
 import java.util.concurrent.ExecutionException;
-
-import org.apache.kafka.common.serialization.Serializer;
 
 /**
  * @author choleece
@@ -19,12 +16,12 @@ import org.apache.kafka.common.serialization.Serializer;
 @Component
 public class KafkaProducer {
 
-    @Autowired
+    @Resource
     private KafkaTemplate<Object, String> kafkaTemplate;
 
-    public void send(String message) {
+    public void send(String topic, String message) {
         // 什么都不做，是异步提交
-        ListenableFuture<SendResult<Object, String>> future = kafkaTemplate.send("test-group", message);
+        ListenableFuture<SendResult<Object, String>> future = kafkaTemplate.send(topic, message);
 
         // 在这里调用future.get()，由于future是阻塞，这里为同步提交
         try {
