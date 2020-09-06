@@ -12,7 +12,7 @@
     <artifactId>md-zookeeper</artifactId>
 
     <properties>
-        <zk-vesion>3.4.13</zk-vesion>
+        <zk-vesion>3.4.14</zk-vesion>
         <zk-client-version>0.11</zk-client-version>
     </properties>
 
