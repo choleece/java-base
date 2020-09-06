@@ -1,6 +1,6 @@
 package cn.choleece.base.miaosha.common.service;
 
-import cn.choleece.base.miaosha.common.controller.model.CreateOrderModel;
+import cn.choleece.base.miaosha.common.controller.param.CreateOrderParam;
 import cn.choleece.base.miaosha.common.entity.MiaoshaOrder;
 import cn.choleece.base.miaosha.common.util.R;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -20,14 +20,14 @@ public interface IMiaoshaOrderService extends IService<MiaoshaOrder> {
      * @param createOrderModel
      * @return
      */
-    R createOrder(CreateOrderModel createOrderModel);
+    R createOrder(CreateOrderParam createOrderModel);
 
     /**
      * 利用数据库悲观锁
      * @param createOrderModel
      * @return
      */
-    R createOrderWithPessimisticDbLock(CreateOrderModel createOrderModel);
+    R createOrderWithPessimisticDbLock(CreateOrderParam createOrderModel);
 
     /**
      * 利用数据库乐观锁
@@ -35,13 +35,13 @@ public interface IMiaoshaOrderService extends IService<MiaoshaOrder> {
      * @return
      * @throws Exception
      */
-    R createOrderWithPessimisticDbLuckyLock(CreateOrderModel createOrderModel) throws Exception;
+    R createOrderWithPessimisticDbLuckyLock(CreateOrderParam createOrderModel) throws Exception;
 
     /**
      * 通过从缓存里获取数据，进行判断
      * @param createOrderModel
      * @return
      */
-    R createOrderWithRedis(CreateOrderModel createOrderModel);
+    R createOrderWithRedis(CreateOrderParam createOrderModel);
 
 }

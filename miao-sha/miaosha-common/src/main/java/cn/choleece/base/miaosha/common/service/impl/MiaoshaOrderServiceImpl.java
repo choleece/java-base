@@ -1,6 +1,6 @@
 package cn.choleece.base.miaosha.common.service.impl;
 
-import cn.choleece.base.miaosha.common.controller.model.CreateOrderModel;
+import cn.choleece.base.miaosha.common.controller.param.CreateOrderParam;
 import cn.choleece.base.miaosha.common.entity.Goods;
 import cn.choleece.base.miaosha.common.entity.MiaoshaGoods;
 import cn.choleece.base.miaosha.common.entity.MiaoshaOrder;
@@ -38,7 +38,7 @@ public class MiaoshaOrderServiceImpl extends ServiceImpl<MiaoshaOrderMapper, Mia
 
     @Override
     @Transactional
-    public R createOrder(CreateOrderModel createOrderModel) {
+    public R createOrder(CreateOrderParam createOrderModel) {
         Goods goods = goodsMapper.selectById(createOrderModel.getGoodsId());
         if (goods == null) {
             return R.error("您购买的商品不存在");
@@ -90,7 +90,7 @@ public class MiaoshaOrderServiceImpl extends ServiceImpl<MiaoshaOrderMapper, Mia
     }
 
     @Override
-    public R createOrderWithPessimisticDbLock(CreateOrderModel createOrderModel) {
+    public R createOrderWithPessimisticDbLock(CreateOrderParam createOrderModel) {
         Goods goods = goodsMapper.selectById(createOrderModel.getGoodsId());
         if (goods == null) {
             return R.error("您购买的商品不存在");
@@ -143,7 +143,7 @@ public class MiaoshaOrderServiceImpl extends ServiceImpl<MiaoshaOrderMapper, Mia
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public R createOrderWithPessimisticDbLuckyLock(CreateOrderModel createOrderModel) throws Exception {
+    public R createOrderWithPessimisticDbLuckyLock(CreateOrderParam createOrderModel) throws Exception {
 
         Goods goods = goodsMapper.selectById(createOrderModel.getGoodsId());
         if (goods == null) {
@@ -200,7 +200,7 @@ public class MiaoshaOrderServiceImpl extends ServiceImpl<MiaoshaOrderMapper, Mia
     }
 
     @Override
-    public R createOrderWithRedis(CreateOrderModel createOrderModel) {
+    public R createOrderWithRedis(CreateOrderParam createOrderModel) {
         // 系统启动时，将数量加载进缓存
         // 获取分布式锁
         // 从缓存内获取数量，针对数量进行判断

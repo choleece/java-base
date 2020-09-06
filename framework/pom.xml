@@ -15,9 +15,7 @@
 
     <properties>
         <commons-pool2-version>2.2</commons-pool2-version>
-        <jedis>2.9.3</jedis>
         <jackson>2.9.9</jackson>
-        <zk.version>0.11</zk.version>
     </properties>
 
     <dependencies>
@@ -41,14 +39,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!--        redis driver        -->
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>${jedis}</version>
-            <optional>true</optional>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
@@ -65,13 +55,6 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-tx</artifactId>
             <version>${spring-version}</version>
-        </dependency>
-
-        <!-- zookeeper -->
-        <dependency>
-            <groupId>com.101tec</groupId>
-            <artifactId>zkclient</artifactId>
-            <version>${zk.version}</version>
         </dependency>
 
         <dependency>
@@ -106,14 +89,6 @@
             <artifactId>rocketmq-client</artifactId>
             <version>4.5.2</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>23.0</version>
-        </dependency>
-
     </dependencies>
 
 </project>

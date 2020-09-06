@@ -21,6 +21,7 @@
         <module>middle-ware</module>
         <module>middle-ware/md-kafka</module>
         <module>middle-ware/md-zookeeper</module>
+        <module>middle-ware/md-redis</module>
     </modules>
 
     <properties>
