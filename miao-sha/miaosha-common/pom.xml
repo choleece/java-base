@@ -72,12 +72,5 @@
             <scope>compile</scope>
         </dependency>
 
-        <!--        redis driver        -->
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>${jedis-version}</version>
-        </dependency>
-
     </dependencies>
 </project>

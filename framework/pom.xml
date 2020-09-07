@@ -15,7 +15,7 @@
 
     <properties>
         <commons-pool2-version>2.2</commons-pool2-version>
-        <jackson>2.9.9</jackson>
+        <mybatis-version>3.5.3</mybatis-version>
     </properties>
 
     <dependencies>
@@ -48,7 +48,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson}</version>
+            <version>${jackson-version}</version>
         </dependency>
 
         <dependency>
@@ -73,7 +73,7 @@
         <dependency>
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis</artifactId>
-            <version>3.5.0</version>
+            <version>${mybatis-version}</version>
         </dependency>
 
         <dependency>
