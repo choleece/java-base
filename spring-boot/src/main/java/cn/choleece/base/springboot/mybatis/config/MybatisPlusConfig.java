@@ -48,7 +48,7 @@ public class MybatisPlusConfig {
 
         paginationInterceptor.setSqlParserList(sqlParserList);
 
-        // sql 过滤器
+        // sql 过滤器， 注意事项，如果有过滤器，则parserList的逻辑都不会走
         paginationInterceptor.setSqlParserFilter(metaObject -> {
             // 根据mapper statement去过滤，或者在mapper里的方法上加上注解@SqlParser(filter=true)，就会过滤掉
             // 下面为一种写死的方法，仅仅作为一个例子， 取命名空间下某一个具体的方法不过滤， 实际使用阔以使用@SqlParser

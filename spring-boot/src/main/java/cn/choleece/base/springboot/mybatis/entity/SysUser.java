@@ -33,7 +33,7 @@ public class SysUser extends BaseEntity {
     /**
      * 更新时间 随数据库系统更新
      */
-    private String mgtModified;
+    private String gmtModified;
 
     /**
      * 创建人名字，插入时自动写入 这里不论是否有值，都会按照自动的内容进行填充

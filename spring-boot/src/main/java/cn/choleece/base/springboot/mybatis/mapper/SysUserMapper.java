@@ -1,6 +1,7 @@
 package cn.choleece.base.springboot.mybatis.mapper;
 
 import cn.choleece.base.springboot.mybatis.entity.SysUser;
+import cn.choleece.base.springboot.mybatis.injector.CustomMapper;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -18,7 +19,7 @@ import java.util.List;
  * @Date 2020-09-12 21:18
  **/
 @Repository
-public interface SysUserMapper extends BaseMapper<SysUser> {
+public interface SysUserMapper extends CustomMapper<SysUser> {
 
 
     /**
@@ -36,5 +37,4 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
      */
     @Select("select * from sys_user ${ew.customSqlSegment}")
     List<SysUser> listSysUserByWrapper(@Param(Constants.WRAPPER) Wrapper<SysUser> wrapper);
-
 }

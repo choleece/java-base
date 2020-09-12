@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 
 /**
  * @author choleece
@@ -68,5 +69,16 @@ public class CholeeceSpringBootApplicationTest {
         MybatisPlusConfig.tableNames.set("sys_user_01");
 
         System.out.println(sysUserMapper.listSysUsers(new Page(1, 10)));
+    }
+
+    @Test
+    public void testCustomInjector() {
+        System.out.println(sysUserMapper.deleteAll());
+    }
+
+    @Test
+    public void testBatchInsert() {
+        System.out.println(sysUserMapper.insertBatchSomeColumn(Arrays.asList(new SysUser().setName("choleece"),
+                new SysUser().setName("chaoli"))));
     }
 }
