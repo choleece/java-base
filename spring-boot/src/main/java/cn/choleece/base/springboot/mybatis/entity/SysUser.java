@@ -36,7 +36,7 @@ public class SysUser extends BaseEntity {
     private String mgtModified;
 
     /**
-     * 创建人名字，插入时自动写入
+     * 创建人名字，插入时自动写入 这里不论是否有值，都会按照自动的内容进行填充
      */
     @TableField(fill = FieldFill.INSERT)
     private String createName;

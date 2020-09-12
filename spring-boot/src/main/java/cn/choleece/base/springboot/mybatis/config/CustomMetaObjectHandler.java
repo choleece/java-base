@@ -15,15 +15,31 @@ public class CustomMetaObjectHandler implements MetaObjectHandler {
 
     @Override
     public void insertFill(MetaObject metaObject) {
-        System.out.println("插入是否自动填充");
-        // 插入时自动填充
-        setFieldValByName("create_name", "测试自动填充", metaObject);
+
+        // 获取当前登录用户， 比如通过session等信息
+        // SysUser user = (SysUser)SecurityUtils.getSubject().getPrincipal();
+
+        // 这里一个小优化，判断有此字段的时候才去执行
+        if (metaObject.hasSetter("createName")) {
+            System.out.println("插入是否自动填充");
+            // 插入时自动填充, 这里的fieldName为Java对应的字段名称，非数据库字段名称
+            // 这样当有值的时候，就不进行填充，只有当值为空时，才进行填充
+            if (getFieldValByName("createName", metaObject) == null) {
+                setFieldValByName("createName", "测试自动填充", metaObject);
+            }
+
+            setUpdateTimeChanged(metaObject);
+        }
     }
 
     @Override
     public void updateFill(MetaObject metaObject) {
         System.out.println("更新是否自动填充");
         // 程序更新自动时间
-        setFieldValByName("update_time", DateUtil.now(), metaObject);
+        setUpdateTimeChanged(metaObject);
+    }
+
+    public void setUpdateTimeChanged(MetaObject metaObject) {
+        setFieldValByName("updateTime", DateUtil.now(), metaObject);
     }
 }
