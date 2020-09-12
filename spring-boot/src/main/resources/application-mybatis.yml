@@ -1,9 +1,9 @@
 mybatis-plus:
   # 如果是放在src/main/java目录下 classpath:/com/yourpackage/*/mapper/*Mapper.xml
   # 如果是放在resource目录 classpath:/mapper/*Mapper.xml
-  mapper-locations: classpath*:/mapper/miaosha/**/*.xml
-  #实体扫描，多个package用逗号或者分号分隔
-  typeAliasesPackage: cn.choleece.base.miaosha.*.entity
+  mapper-locations: classpath*:/mapper/*.xml
+  # 实体扫描，多个package用逗号或者分号分隔
+  typeAliasesPackage: cn.choleece.base.springboot.mybatis.entity
   global-config:
     db-config:
       # 主键类型  配置详情见 com.baomidou.mybatisplus.annotation
