@@ -6,7 +6,7 @@ package cn.choleece.base.pattern.staticproxy;
  */
 public class ProxySubject implements Subject {
 
-    private RealSubject realSubject;
+    private Subject realSubject;
 
     @Override
     public void request() {
