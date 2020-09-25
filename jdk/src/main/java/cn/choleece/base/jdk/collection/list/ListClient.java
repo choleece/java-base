@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * @author choleece
- * @Description: TODO
+ * @Description: array list linked list 遍历速度
  * @Date 2020-05-08 00:00
  **/
 public class ListClient {
@@ -16,7 +16,7 @@ public class ListClient {
 
         // 如果不指定大小，那么array涉及多次扩容，速度远小于linked list 的add
         List list = new ArrayList(200001);
-        // linked list添加的速度很快，优于arraylist，且不省空间，但是用for遍历很慢, 和array list相差甚远; foreach 两者差不多，array list 略胜一筹；iterator两者相当，linked list略胜一筹；
+        // linked list添加的速度很快，优于arraylist，且节省空间，但是用for遍历很慢, 和array list相差甚远; foreach 两者差不多，array list 略胜一筹；iterator两者相当，linked list略胜一筹；
         // 总结一哈，iterator 性能最好，foreach其次，for对于数组友好(数组的for 和 iterator速度相当)
         List list1 = new LinkedList<>();
 
