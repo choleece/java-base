@@ -1,5 +1,6 @@
 package cn.choleece.base.jdk.collection.map;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +20,8 @@ public class HashMapTest {
          * 无参构造函数，初始大小为16, 负载因子为0.75，其所有的参数都是默认的
          */
         Map<String, String> map = new HashMap<>();
+
+        Collections.synchronizedMap(map);
 
         /**
          * 给定默认大小initialCapacity, 系统返回一个2的指数，这个数 >= initialCapacity ,且离initialCapacity最近，作为其初始大小, 比如指定5，会返回8
