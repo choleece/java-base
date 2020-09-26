@@ -209,6 +209,7 @@ public Object postProcessAfterInitialization(Object bean, String beanName) throw
 ## 分析bean 加载过程
 
 可参考:https://www.jianshu.com/p/baa1d48e7f57
+https://juejin.im/post/6844903581678600206
 
 1. AbstractApplicationContext context = new ClassPathXmlApplicationContext("beans.xml");从xml里加载bean
 ```
@@ -302,3 +303,6 @@ protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) throws BeansE
 
 }
 ```
+
+### Spring 事物管理
+https://juejin.im/post/6844903608224333838
