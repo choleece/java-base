@@ -19,6 +19,7 @@ public class ProxyTest {
     }
 
     public static void main(String[] args) {
+        // 只要是生成的这个接口的代理类
         Interface in = (Interface) Proxy.newProxyInstance(ProxyTest.class.getClassLoader(), new Class[]{Interface.class}, new InvocationHandler() {
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
