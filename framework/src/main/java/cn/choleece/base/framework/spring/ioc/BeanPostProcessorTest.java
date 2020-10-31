@@ -3,7 +3,9 @@ package cn.choleece.base.framework.spring.ioc;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -25,6 +27,13 @@ public class BeanPostProcessorTest {
         helloWorld.printMessage();
 
         context.registerShutdownHook();
+    }
+
+    static class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+        @Override
+        public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+            System.out.println("beanFactory post processor...");
+        }
     }
 
     static class HelloWorld implements BeanPostProcessor, InitializingBean, DisposableBean {
