@@ -428,4 +428,5 @@ public class ZkCuratorProperty {
     @EnableConfigurationProperties(ZkCuratorProperty.class)
     public class ConfigurationClass {}
     ```
-        
+ 
+ - @Import 
