@@ -57,3 +57,375 @@ ApplicationContext applicationContext = new AnnotationConfigApplicationContext(J
 HelloWorldBean javaBean = (HelloWorldBean) applicationContext.getBean("helloWorldBean");
 javaBean.sayHello();
 ```
+
+### Bean的定义
+前边我们看到，配置Bean的方式大致有三种，但是这三种其实对应的都是一个东西,Metadata，元数据。配置的目的是为了更好的去描述元数据，那么我们就需要去定义
+这个元数据，看看这个元数据到底长什么样子。在Spring中，Bean的定义由BeanDefinition来进行包装，下面我们就一探究竟，看看这个BeanDefinition包含哪些数据，是否跟XML配置里的属性一致。
+
+```
+package org.springframework.beans.factory.config
+
+public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
+	// Modifiable attributes
+
+	/**
+	 * Set the name of the parent definition of this bean definition, if any.
+	 */
+	void setParentName(@Nullable String parentName);
+
+	/**
+	 * Return the name of the parent definition of this bean definition, if any.
+	 */
+	@Nullable
+	String getParentName();
+
+	// 设置Bean的一个全限定类名 com.xxx.xxx.HelloWorldBean
+	void setBeanClassName(@Nullable String beanClassName);
+	@Nullable
+	String getBeanClassName();
+
+    // 设置Bean的类型/或者作用范围，比如单例，多例，或者同一个session是同一个实例等等
+	void setScope(@Nullable String scope);
+	String getScope();
+
+    // 设置是否懒加载 如果设置的是false, 那么当容器已经启动之后，这个就会实例化
+	void setLazyInit(boolean lazyInit);
+	boolean isLazyInit();
+
+    // 设置依赖的bean，当容器中存在依赖的bean的时候，此Bean才生效， 下文将讲解一些关键的注解
+	void setDependsOn(@Nullable String... dependsOn);
+
+    // 获取依赖的bean数组
+	@Nullable
+	String[] getDependsOn();
+
+    // 设置bean是否是自动装配
+	void setAutowireCandidate(boolean autowireCandidate);
+	boolean isAutowireCandidate();
+
+    // 当一个bean注册了多个之后，这个确定是否是首选滴
+	void setPrimary(boolean primary);
+	boolean isPrimary();
+
+    // 配置/获取设置了FactoryBean的名字, 这里要区分下FactoryBean 和 BeanFactory， 这里后文也会进行讲解
+	void setFactoryBeanName(@Nullable String factoryBeanName);
+	@Nullable
+	String getFactoryBeanName();
+	void setFactoryMethodName(@Nullable String factoryMethodName);
+
+    // 设置工厂方法，与FactoryBean成对出现
+	@Nullable
+	String getFactoryMethodName();
+
+    // 获取构造函数配置的参数
+	ConstructorArgumentValues getConstructorArgumentValues();
+	default boolean hasConstructorArgumentValues() {
+		return !getConstructorArgumentValues().isEmpty();
+	}
+
+    // 获取属性集合
+	MutablePropertyValues getPropertyValues();
+	default boolean hasPropertyValues() {
+		return !getPropertyValues().isEmpty();
+	}
+
+    // 设置/获取init method 的名字，这里是个勾子函数
+	void setInitMethodName(@Nullable String initMethodName);
+	@Nullable
+	String getInitMethodName();
+
+    // 设置/获取Bean销毁前执行的方法名称， 这里也是个勾子函数
+	void setDestroyMethodName(@Nullable String destroyMethodName);
+	@Nullable
+	String getDestroyMethodName();
+
+	/**
+	 * Set the role hint for this {@code BeanDefinition}. The role hint
+	 * provides the frameworks as well as tools an indication of
+	 * the role and importance of a particular {@code BeanDefinition}.
+	 * @since 5.1
+	 * @see #ROLE_APPLICATION
+	 * @see #ROLE_SUPPORT
+	 * @see #ROLE_INFRASTRUCTURE
+	 */
+	void setRole(int role);
+
+	/**
+	 * Get the role hint for this {@code BeanDefinition}. The role hint
+	 * provides the frameworks as well as tools an indication of
+	 * the role and importance of a particular {@code BeanDefinition}.
+	 * @see #ROLE_APPLICATION
+	 * @see #ROLE_SUPPORT
+	 * @see #ROLE_INFRASTRUCTURE
+	 */
+	int getRole();
+
+	/**
+	 * Set a human-readable description of this bean definition.
+	 * @since 5.1
+	 */
+	void setDescription(@Nullable String description);
+
+	/**
+	 * Return a human-readable description of this bean definition.
+	 */
+	@Nullable
+	String getDescription();
+
+
+	// Read-only attributes
+
+	/**
+	 * Return a resolvable type for this bean definition,
+	 * based on the bean class or other specific metadata.
+	 * <p>This is typically fully resolved on a runtime-merged bean definition
+	 * but not necessarily on a configuration-time definition instance.
+	 * @return the resolvable type (potentially {@link ResolvableType#NONE})
+	 * @since 5.2
+	 * @see ConfigurableBeanFactory#getMergedBeanDefinition
+	 */
+	ResolvableType getResolvableType();
+
+    // 是否是单例
+	boolean isSingleton();
+    
+    // 是否为原型， 也即多例
+	boolean isPrototype();
+
+	/**
+	 * Return whether this bean is "abstract", that is, not meant to be instantiated.
+	 */
+     // 是否是抽象的
+	boolean isAbstract();
+
+	/**
+	 * Return a description of the resource that this bean definition
+	 * came from (for the purpose of showing context in case of errors).
+	 */
+	@Nullable
+	String getResourceDescription();
+
+	/**
+	 * Return the originating BeanDefinition, or {@code null} if none.
+	 * <p>Allows for retrieving the decorated bean definition, if any.
+	 * <p>Note that this method returns the immediate originator. Iterate through the
+	 * originator chain to find the original BeanDefinition as defined by the user.
+	 */
+    // 如果这个Bean是个代理对象，这个方法用于获取它原始的Bean
+	@Nullable
+	BeanDefinition getOriginatingBeanDefinition();
+}
+```
+
+以上内容为一个Bean所对应的原始数据，可以看到BeanDefinition是个接口，实际组装的是它的实现类，BeanDefinition只是定义了一些基本方法，但是通过方法名，
+我们是可以了解到一个Bean的MetaData是包含哪些属性的。下面是一个BeanDefinition的例子，例子里有一些IOC启动时候的影子，大家先大致了解哈。
+```
+public class BeanDefinitionTest {
+
+    public static void main(String[] args) {
+        // 新建一个工厂
+        DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
+
+        // 新建一个 bean definition
+        GenericBeanDefinition beanDefinition = (GenericBeanDefinition) BeanDefinitionBuilder
+                .genericBeanDefinition(HelloWorldBean.class)
+                .setAutowireMode(GenericBeanDefinition.AUTOWIRE_BY_TYPE)
+                .getBeanDefinition();
+
+        // 注册到工厂
+        factory.registerBeanDefinition("helloWorld", beanDefinition);
+
+        // 自己定义一个 bean post processor. 作用是在 bean 初始化之后, 判断这个 bean 如果实现了 ApplicationContextAware 接口, 就把 context 注册进去..(先不要管 context 哪来的...例子嘛)
+        factory.addBeanPostProcessor(new BeanPostProcessor() {
+            @Override
+            public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+                return bean;
+            }
+
+            @Override
+            public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+                if (bean instanceof ApplicationContextAware) {
+                    GenericApplicationContext context = new GenericApplicationContext(factory);
+                    ((ApplicationContextAware) bean).setApplicationContext(context);
+                }
+                return bean;
+            }
+        });
+
+        // 再注册一个 bean post processor: AutowiredAnnotationBeanPostProcessor. 作用是搜索这个 bean 中的 @Autowired 注解, 生成注入依赖的信息.
+        AutowiredAnnotationBeanPostProcessor autowiredAnnotationBeanPostProcessor = new AutowiredAnnotationBeanPostProcessor();
+        autowiredAnnotationBeanPostProcessor.setBeanFactory(factory);
+        factory.addBeanPostProcessor(autowiredAnnotationBeanPostProcessor);
+
+        HelloWorldBean helloWorldBean = factory.getBean("helloWorld", HelloWorldBean.class);
+        helloWorldBean.sayHello();
+    }
+}
+```
+
+### 使用@Configuration Java方式配置的时候常用的一些注解
+- @Configuration 用于替代spring-application-context.xml里配置<beans/>这样的文件，一般在配置类上增加此注解，如：
+```
+@Configuration
+public class JavaConfig {
+
+    @Bean(value = "helloWorldBean", initMethod = "init", destroyMethod = "destroy")
+    public HelloWorldBean helloWorldBean() {
+        return new HelloWorldBean();
+    }
+
+    public void init() {
+        System.out.println("init");
+    }
+}
+```
+- @Conditional 用来Spring Bean或者@Configuration配置，只有当某条件生效的时候，Bean或者配置才生效
+- @ConditionalOnBean 组合@Conditional，只有当IOC容器中存在指定的Bean的时候，Bean或者配置才生效
+- @ConditionalOnMissingBean 组合@Conditional, 作用与@ConditionalOnBean相反
+- @ConditionalOnClass 组合@Conditional， 只有当IOC容器中存在指定的Class的时候，Bean或者配置才生效
+- @ConditionalOnMissingClass 组合@Conditional， 作用与@ConditionalOnClass相反
+- @ConditionalOnWebApplication 组合@Conditional, 只有当应用为WEB应用的时候才生效，应用类型大致可以分为这么几类
+```
+enum Type {
+
+    /**
+     * Any web application will match.
+     */
+    ANY,
+
+    /**
+     * Only servlet-based web application will match.
+     */
+    SERVLET,
+
+    /**
+     * Only reactive-based web application will match.
+     */
+    REACTIVE
+
+}
+```
+- @ConditionalOnNotWebApplication 组合@Conditional， 作用与@ConditionalOnWebApplication相反
+- @ConditionalOnProperty 组合@Conditional， 只有当属性值指定的时候，Bean或配置才生效， 例如
+```
+@Configuration
+@EnableConfigurationProperties({ZkCuratorProperty.class})
+@ConditionalOnProperty(prefix = "choleece.zookeeper.curator", name = "server")
+public class ZkConfiguration {
+    @Autowired
+    private ZkCuratorProperty property;
+
+    @Bean(initMethod = "start")
+    public CuratorFramework curatorFramework() {
+        return CuratorFrameworkFactory.newClient(
+                property.getServer(),
+                property.getSessionTimeoutMs(),
+                property.getConnectionTimeoutMs(),
+                new RetryNTimes(property.getMaxRetries(), property.getSleepMsBetweenRetries()));
+    }
+}
+```
+- @ConfigurationProperties 用来加载额外的配置，直接将配置文件映射成对象，可以应用在类或者Bean上，如
+```
+@Data
+@ConfigurationProperties(prefix = "choleece.zookeeper.curator")
+public class ZkCuratorProperty {
+    /**
+     * zk 地址ip:port
+     */
+    private String server;
+
+    /**
+     * session超时时间
+     */
+    private Integer sessionTimeoutMs;
+
+    /**
+     * 连接超时时间
+     */
+    private Integer connectionTimeoutMs;
+
+    /**
+     * 最大重试次数
+     */
+    private Integer maxRetries;
+
+    /**
+     * 重试间隔时间
+     */
+    private Integer sleepMsBetweenRetries;
+}
+```
+- @EnableConfigurationProperties 用来配合@ConfigurationProperties， 只有当注解了EnableConfigurationProperties才会生效。例如，使用以下两种方式，都阔以在IOC容器中注入Bean
+    
+    方式一：
+    ```
+    // 利用Component注解，可以直接将ZkCuratorProperty配置到IOC容器内，要使用的话可以直接用@Autowired的方式进行注入
+    @Data
+    @Component
+    @ConfigurationProperties(prefix = "choleece.zookeeper.curator")
+    public class ZkCuratorProperty {
+        /**
+         * zk 地址ip:port
+         */
+        private String server;
+    
+        /**
+         * session超时时间
+         */
+        private Integer sessionTimeoutMs;
+    
+        /**
+         * 连接超时时间
+         */
+        private Integer connectionTimeoutMs;
+    
+        /**
+         * 最大重试次数
+         */
+        private Integer maxRetries;
+    
+        /**
+         * 重试间隔时间
+         */
+        private Integer sleepMsBetweenRetries;
+    }
+    ```
+  
+    方式二：
+    ```
+    @Data
+    @ConfigurationProperties(prefix = "choleece.zookeeper.curator")
+    public class ZkCuratorProperty {
+        /**
+         * zk 地址ip:port
+         */
+        private String server;
+    
+        /**
+         * session超时时间
+         */
+        private Integer sessionTimeoutMs;
+    
+        /**
+         * 连接超时时间
+         */
+        private Integer connectionTimeoutMs;
+    
+        /**
+         * 最大重试次数
+         */
+        private Integer maxRetries;
+    
+        /**
+         * 重试间隔时间
+         */
+        private Integer sleepMsBetweenRetries;
+    }
+
+    // 采用Configuration + EnableConfigurationProperties的方式也阔以起到同样的作用
+    @Configuration
+    @EnableConfigurationProperties(ZkCuratorProperty.class)
+    public class ConfigurationClass {}
+    ```
+        
