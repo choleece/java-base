@@ -2,7 +2,7 @@ package cn.choleece.base.framework.exception;
 
 /**
  * @description: TODO
- * @author: sf
+ * @author: choleece
  * @time: 2019-10-14 18:10
  */
 public class InvalidDataAccessResourceUsageException extends NonTransientDataAccessException {

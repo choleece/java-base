@@ -4,7 +4,7 @@ import org.springframework.lang.Nullable;
 
 /**
  * @description: TODO
- * @author: sf
+ * @author: choleece
  * @time: 2019-10-14 17:38
  */
 public class NonTransientDataAccessException extends DataAccessException {

@@ -2,7 +2,7 @@ package cn.choleece.base.jdk.thread.communication;
 
 /**
  * @description: 线程通信 等待通知机制
- * @author: sf
+ * @author: choleece
  * @time: 2019-10-18 17:18
  */
 public class TwoThreadWaitNotify {

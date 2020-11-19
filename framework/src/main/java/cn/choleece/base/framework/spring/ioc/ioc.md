@@ -576,3 +576,4 @@ public class ZkCuratorProperty {
    	}
    }
    ```
+- @EnableAutoConfiguration注解的原理
