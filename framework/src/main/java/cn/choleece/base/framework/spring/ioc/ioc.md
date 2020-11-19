@@ -429,4 +429,150 @@ public class ZkCuratorProperty {
     public class ConfigurationClass {}
     ```
  
- - @Import 
+ - @Import 一共可以提供三种方式进入配置Bean， @Import只能作用在类上
+ 
+    方式一：直接在类上注入
+    ```
+    public class BaseClassOne {
+    }
+   
+    public class BaseClassTwo {
+    } 
+   
+    @Import({BaseClassOne.class, BaseClassTwo.class})
+    public class ImportTypeOne {
+    }
+   
+    public static void main(String[] args) {
+        // 这里的参数代表要做操作的类
+        AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(ImportTypeOne.class);
+
+        String[] beanDefinitionNames = applicationContext.getBeanDefinitionNames();
+        for (String name : beanDefinitionNames){
+            System.out.println(name);
+        }
+    }
+   
+    // 输出：发现除了importTypeOne本身外，另外两个类也注入进来了
+    importTypeOne
+    cn.choleece.base.framework.spring.annotation.BaseClassOne
+    cn.choleece.base.framework.spring.annotation.BaseClassTwo
+    ```
+   
+   方式二：通过实现ImportSelector的形式， 这一共比较重要，这里可以动态的去注入一些bean
+   ```
+   public class ImportTypeTwo implements ImportSelector {
+   
+       @Override
+       public String[] selectImports(AnnotationMetadata importingClassMetadata) {
+           // 这里可以返回空数组，但是不能返回NULL，否则会NPE
+   //        return new String[0];
+   
+           // 这里返回类的全限定名的数组，所以这里可以是动态的， 这个动态特性很重要，可以当成可配置的参数来进行使用，达到动态配置Bean到IOC容器内
+           // 包装不同，增加判断条件，返回不同的数组
+           return new String[] {"cn.choleece.base.framework.spring.annotation.BaseClassOne"};
+       }
+   }
+   
+   @Import(ImportTypeTwo.class)
+   public class BeanImport {
+   }
+   
+   public static void main(String[] args) {
+       // 这里的参数代表要做操作的类
+       AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(BeanImport.class);
+
+       String[] beanDefinitionNames = applicationContext.getBeanDefinitionNames();
+       for (String name : beanDefinitionNames){
+           System.out.println(name);
+       }
+   }
+  
+   // 输出：发现，当通过import导入之后，IOC容器内会注入一个在selectImports方法返回的数组内的Bean
+   beanImport
+   cn.choleece.base.framework.spring.annotation.BaseClassOne
+   ```
+   
+   方式三：通过实现ImportBeanDefinitionRegistrar接口，来手动进行注入
+   
+   ```
+   public class ImportTypeTwo implements ImportSelector {
+      
+      @Override
+      public String[] selectImports(AnnotationMetadata importingClassMetadata) {
+          // 这里可以返回空数组，但是不能返回NULL，否则会NPE
+          // return new String[0];
+  
+          // 这里返回类的全限定名的数组，所以这里可以是动态的， 这个动态特性很重要，可以当成可配置的参数来进行使用，达到动态配置Bean到IOC容器内
+          return new String[] {"cn.choleece.base.framework.spring.annotation.BaseClassOne"};
+      }
+    }
+  
+   @Import(ImportTypeTwo.class)
+      public class BeanImport {
+   }
+  
+   public static void main(String[] args) {
+      // 这里的参数代表要做操作的类
+      AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(BeanImport.class);
+
+      String[] beanDefinitionNames = applicationContext.getBeanDefinitionNames();
+      for (String name : beanDefinitionNames){
+          System.out.println(name);
+      }
+   }
+ 
+   // 输出：发现，当通过import导入之后，IOC容器内会注入一个自己手动注入的Bean
+   beanImport   
+   customBean
+   ```
+   
+   以上为@Import的三种用法，基于以上用法，可以有很多的扩展，比如我们常见的@Enable***之类的注解，就是建立在@Import之上， 下面我看一个例子
+   ```
+   // 定义一个注解，注解的作用就是执行@Import，我们来看看Import里的类是干什么
+   @Target(ElementType.TYPE)
+   @Retention(RetentionPolicy.RUNTIME)
+   @Import(SchedulingConfiguration.class)
+   @Documented
+   public @interface EnableScheduling {
+   }
+   
+   // SchedulingConfiguration 是个Configuration类, 里边可以注入@Bean，从而向IOC容器类注册Bean
+   @Configuration
+   @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+   public class SchedulingConfiguration {
+   
+   	@Bean(name = TaskManagementConfigUtils.SCHEDULED_ANNOTATION_PROCESSOR_BEAN_NAME)
+   	@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+   	public ScheduledAnnotationBeanPostProcessor scheduledAnnotationProcessor() {
+   		return new ScheduledAnnotationBeanPostProcessor();
+   	}
+   }
+   
+   @Target(ElementType.TYPE)
+   @Retention(RetentionPolicy.RUNTIME)
+   @Documented
+   @Import(AspectJAutoProxyRegistrar.class)
+   public @interface EnableAspectJAutoProxy {
+   	boolean proxyTargetClass() default false;
+   	boolean exposeProxy() default false;
+   }
+   
+   @Override
+   public void registerBeanDefinitions(
+   		AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+   
+   	AopConfigUtils.registerAspectJAnnotationAutoProxyCreatorIfNecessary(registry);
+   
+   	AnnotationAttributes enableAspectJAutoProxy =
+   			AnnotationConfigUtils.attributesFor(importingClassMetadata, EnableAspectJAutoProxy.class);
+   	if (enableAspectJAutoProxy != null) {
+   		if (enableAspectJAutoProxy.getBoolean("proxyTargetClass")) {
+   			AopConfigUtils.forceAutoProxyCreatorToUseClassProxying(registry);
+   		}
+   		if (enableAspectJAutoProxy.getBoolean("exposeProxy")) {
+   			AopConfigUtils.forceAutoProxyCreatorToExposeProxy(registry);
+   		}
+   	}
+   }
+   ```
