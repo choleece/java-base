@@ -1023,4 +1023,50 @@ protected void doRegisterBeanDefinitions(Element root) {
 
     this.delegate = parent;
 }
+
+// 进行解析
+protected void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {
+    // http://www.springframework.org/schema/beans 判断如果是这个，则往下走逻辑， 搜索阔以发现，这个下边只包含<import/> <beans/> <bean/> <alias/>四个标签
+    if (delegate.isDefaultNamespace(root)) {
+        NodeList nl = root.getChildNodes();
+        for (int i = 0; i < nl.getLength(); i++) {
+            Node node = nl.item(i);
+            if (node instanceof Element) {
+                Element ele = (Element) node;
+                // 解析default name space 下的标签
+                if (delegate.isDefaultNamespace(ele)) {
+                    // 实际进行ele解析
+                    parseDefaultElement(ele, delegate);
+                }
+                else {
+                    delegate.parseCustomElement(ele);
+                }
+            }
+        }
+    }
+    else {
+        delegate.parseCustomElement(root);
+    }
+}
+
+// 按照类型进行解析
+private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate delegate) {
+    // 解析<import/>标签
+    if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
+        importBeanDefinitionResource(ele);
+    }
+    // 解析 alias标签
+    else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
+        processAliasRegistration(ele);
+    }
+    // 解析bean标签
+    else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
+        processBeanDefinition(ele, delegate);
+    }
+    // 解析beans标签
+    else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
+        // recurse
+        doRegisterBeanDefinitions(ele);
+    }
+}
 ```
