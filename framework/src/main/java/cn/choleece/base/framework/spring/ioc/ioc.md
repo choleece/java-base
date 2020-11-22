@@ -1015,8 +1015,10 @@ protected void doRegisterBeanDefinitions(Element root) {
         }
     }
 
+    // 这里为勾子函数，在解析前做什么事情
     preProcessXml(root);
     parseBeanDefinitions(root, this.delegate);
+    // 同理，在解析后做什么事情
     postProcessXml(root);
 
     this.delegate = parent;
