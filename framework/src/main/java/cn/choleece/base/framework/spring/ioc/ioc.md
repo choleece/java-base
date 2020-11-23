@@ -2096,3 +2096,17 @@ protected void populateBean(String beanName, RootBeanDefinition mbd, @Nullable B
     }
 }
 ```
+
+至此，整个IOC加载过程已经浏览完成，知识还是需要多复习，才能温故知新，记住主要的流程，然后再在流程类去看分支，希望我也能做到如此。
+
+### BeanFactory & FactoryBean
+
+### BeanFactoryPostProcessor & BeanPostProcessor
+
+### 如何解决循环依赖
+
+### 各种aware接口
+
+### AOP
+
+### SpringMybatis如何实现的，如何做到事物，我猜测代理 + ThreadLocal, 代理做到在执行mapper.method的之前获取session, 之后做提交等动作，ThreadLocal做到阔以保证取到的是同一个session，也即多个方法可以共用同一个事物。具体需要实际去探究
