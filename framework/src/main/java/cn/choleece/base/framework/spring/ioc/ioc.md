@@ -2134,6 +2134,7 @@ public class FactoryBeanClient implements FactoryBean<HelloWorldBean> {
     }
 }
 ```
+
 ## BeanFactoryPostProcessor & BeanPostProcessor
 BeanPostProcessor 就是有两个实现方法，阔以在Bean实例化的时候，进行勾子回调
 ```
