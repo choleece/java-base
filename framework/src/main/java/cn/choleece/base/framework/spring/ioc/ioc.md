@@ -2226,6 +2226,18 @@ static class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 ```
 
 ## 如何解决循环依赖
+```
+/** Cache of singleton objects: bean name to bean instance. */
+private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
+
+/** Cache of singleton factories: bean name to ObjectFactory. */
+private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
+
+/** Cache of early singleton objects: bean name to bean instance. */
+private final Map<String, Object> earlySingletonObjects = new HashMap<>(16);
+
+其实就是利用这三个map来解决的，earlySingetonObjects里边存放刚初始化的实例，还没有去set属性，利用这样一个中间过度状态，来完成循环依赖，所以只有构造函数的形式才能进行循环依赖，如果是set类型，就不能允许
+```
 
 ## 各种aware接口
 
