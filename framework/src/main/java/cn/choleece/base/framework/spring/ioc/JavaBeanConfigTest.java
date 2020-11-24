@@ -15,6 +15,9 @@ public class JavaBeanConfigTest {
 
         HelloWorldBean javaBean = (HelloWorldBean) applicationContext.getBean("helloWorldBean");
         javaBean.sayHello();
+
+        JavaConfig javaConfig = applicationContext.getBean(JavaConfig.class);
+        javaConfig.init();
     }
 
 }

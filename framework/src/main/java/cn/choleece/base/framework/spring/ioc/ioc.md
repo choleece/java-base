@@ -1,4 +1,4 @@
-# IOC 源码分析
+# Spring 源码分析
 IOC(Inversion of Controller)本质是一个容器， 这个容器在Spring里也即BeanFactory(它是一个基础的容器，只是提供一些基础的操作方法，它还有很多的派生类)，
 管理者系统里的bean；Bean可以理解成就是一个一个的实例，此实例可以是一个普通的对象，也可以是不同对象的复合组成的对象，后续会将Bean的在Spring中的定义，也即BeanDefinition, 这些数据也属于IOC的MetaData，元数据，我个人理解为描述数据的数据。
 ## Bean配置的方式
@@ -2099,14 +2099,135 @@ protected void populateBean(String beanName, RootBeanDefinition mbd, @Nullable B
 
 至此，整个IOC加载过程已经浏览完成，知识还是需要多复习，才能温故知新，记住主要的流程，然后再在流程类去看分支，希望我也能做到如此。
 
-### BeanFactory & FactoryBean
+## BeanFactory & FactoryBean
+BeanFactory是整个Spring IOC的核心，其有很多的实现，像常用SpringApplicationContext是其的一个子类，还有比如DefaultListableBeanFactory
+也是其一个重要的子类，可以理解BeanFactory是拥有Spring IOC整个上下文的类；FactoryBean也是一个接口，看其语意呢，是一个特殊的Bean，是一个Factory Bean,我们都知道，Factory一般用来生产对象， 
+FactoryBean也是同样的功能，也是用来生成对象用的， 其有个一个接口，叫getObject方法，如代码:
+```
+public class FactoryBeanClient implements FactoryBean<HelloWorldBean> {
 
-### BeanFactoryPostProcessor & BeanPostProcessor
+    // 通过这个方法，Spring IOC里会保存一个HelloWorldBean实例， 但是这里需要注意的是，通过这里注册的Bean，仅仅是一个对象而已，它没有去走类似init, BeanFactoryPostProcessor类似的方法
+    @Override
+    public HelloWorldBean getObject() throws Exception {
+        HelloWorldBean worldBean = new HelloWorldBean();
+        worldBean.setName("factory bean");
+        System.out.println("在这里注册bean的时候，也会将此bean注册进去，beanName是FactoryBean的BeanName前面加上&");
+        return worldBean;
+    }
 
-### 如何解决循环依赖
+    @Override
+    public Class<?> getObjectType() {
+        return HelloWorldBean.class;
+    }
 
-### 各种aware接口
+    public static void main(String[] args) {
+        RootBeanDefinition beanDefinition = new RootBeanDefinition(FactoryBeanClient.class);
+        DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+        // 此时IOC容器内会有两个Bean, 一个是FactoryBeanClient, 一个是HelloWorldBean, 二者的beanName区别是的FactoryBean的bean前边有个&
+        beanFactory.registerBeanDefinition("factoryBean", beanDefinition);
 
-### AOP
+        FactoryBeanClient client = (FactoryBeanClient) beanFactory.getBean("&factoryBean");
+        System.out.println(client);
 
-### SpringMybatis如何实现的，如何做到事物，我猜测代理 + ThreadLocal, 代理做到在执行mapper.method的之前获取session, 之后做提交等动作，ThreadLocal做到阔以保证取到的是同一个session，也即多个方法可以共用同一个事物。具体需要实际去探究
+        HelloWorldBean helloWorldBean = (HelloWorldBean) beanFactory.getBean("factoryBean");
+        helloWorldBean.sayHello();
+    }
+}
+```
+## BeanFactoryPostProcessor & BeanPostProcessor
+BeanPostProcessor 就是有两个实现方法，阔以在Bean实例化的时候，进行勾子回调
+```
+static class HelloWorld implements BeanPostProcessor, InitializingBean, DisposableBean {
+
+    private String message;
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void printMessage() {
+        System.out.println(message);
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        System.out.println("post construct...");
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        System.out.println("afterPropertiesSet...");
+    }
+
+    /**
+     * 这里也可以去实现InitializingBean 或者使用@PostContructor注解
+     */
+    public void init() {
+        System.out.println("init...");
+    }
+
+    @PreDestroy
+    public void preDestroy() {
+        System.out.println("pre destroy...");
+    }
+
+    /**
+     * 这里也可以去实现DisposalBean 或者使用@PreDestroy注解
+     */
+    public void destroyMethod() {
+        System.out.println("destroy method...");
+    }
+
+    /**
+     * 在初始化之前做某些事情
+     * @param bean
+     * @param beanName
+     * @return
+     * @throws BeansException
+     */
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        System.out.println("postProcessBeforeInitialization...");
+        return null;
+    }
+
+    /**
+     * 在初始化之后做某些事情
+     * @param bean
+     * @param beanName
+     * @return
+     * @throws BeansException
+     */
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        System.out.println("postProcessAfterInitialization....");
+        return null;
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        System.out.println("destroy....");
+    }
+}
+
+BeanFactoryPostProcessor呢，有个方法
+static class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+    @Override
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+        // 阔以在这里进行手动注入bean,因为这里能拿到全局的beanFactory
+        System.out.println("beanFactory post processor...");
+    }
+}
+```
+
+## 如何解决循环依赖
+
+## 各种aware接口
+
+## AOP
+
+## SpringMybatis如何实现的，如何做到事物，我猜测代理 + ThreadLocal, 代理做到在执行mapper.method的之前获取session, 之后做提交等动作，ThreadLocal做到阔以保证取到的是同一个session，也即多个方法可以共用同一个事物。具体需要实际去探究

@@ -13,7 +13,7 @@ public class HelloWorldBean implements BeanFactoryPostProcessor {
 
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        System.out.println("------");
+        System.out.println("我这里是BeanFactoryPostProcessor里的postProcessBeanFactory方法");
     }
 
     private String name;
