@@ -13,7 +13,7 @@ public class InterceptorChain {
 
     private List<Interceptor> interceptors = new LinkedList<>();
 
-    private Iterator<Interceptor> iterator = null;
+    private Iterator<Interceptor> iterator;
 
     public void addInterceptor(Interceptor interceptor) {
         interceptors.add(interceptor);
@@ -21,6 +21,7 @@ public class InterceptorChain {
 
     public Object plugin(Object object) {
 
+        // iterator一旦实例化后，后续再对集合所做的增加，修改，然后再去操作iterator后就会报错
         if (iterator == null) {
             iterator = interceptors.iterator();
         }

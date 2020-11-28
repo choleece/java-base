@@ -15,9 +15,9 @@ public class InterceptorTest {
     public static void main(String[] args) {
         InterceptorChain chain = new InterceptorChain();
         chain.addInterceptor(new InterceptorA());
-        chain.addInterceptor(new InterceptorC());
         chain.addInterceptor(new InterceptorB());
+        chain.addInterceptor(new InterceptorC());
         chain.plugin(new Object());
-    }
 
+    }
 }
