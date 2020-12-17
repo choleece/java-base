@@ -3,12 +3,14 @@ package cn.choleece.base.springsource.util;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.stereotype.Component;
 
 /**
  * @author choleece
  * @Description: 从SpringContext里根据名字等方法获取Bean，这个方法需要实现ApplicationContextAware，然后初始化一个application context，这个bean最后也需要注入到IOC中去
  * @Date 2019-09-22 00:02
  **/
+@Component
 public class SpringContextUtils implements ApplicationContextAware {
 
     public static ApplicationContext applicationContext;

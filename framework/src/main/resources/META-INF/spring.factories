@@ -4,4 +4,4 @@ cn.choleece.base.zk.config.ZookeeperAutoConfiguration
 
 # EnvironmentPostProcessor
 org.springframework.boot.env.EnvironmentPostProcessor=\
-cn.choleece.base.framework.spring.environment.BingEnvironmentPostProcessor
+cn.choleece.base.springsource.env.BingEnvironmentPostProcessor

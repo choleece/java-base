@@ -1,7 +1,9 @@
-package cn.choleece.base.framework.spring.environment;
+package cn.choleece.base.springsource.env;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.env.CompositePropertySource;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MutablePropertySources;
@@ -22,9 +24,11 @@ import static org.springframework.core.io.support.ResourcePatternResolver.CLASSP
  * 允许自定义properties
  *
  * @author choleece
- * @Description: TODO
+ * @Description: order 的顺序决定是否阔以被外层覆盖，如果权重选最大，那么将无法被覆盖，
+ * 一般选择Ordered.LOWEST_PRECEDENCE(默认是这个)， 这样阔以在最外层被覆盖
  * @Date 2020-12-17 22:58
  **/
+@Order(value = Ordered.HIGHEST_PRECEDENCE)
 public class BingEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
     public static final String PROPERTY_SOURCE_NAME = "bing-default";
@@ -56,10 +60,10 @@ public class BingEnvironmentPostProcessor implements EnvironmentPostProcessor {
     private void processPropertySource(ConfigurableEnvironment environment, ResourceLoader resourceLoader) {
 
         try {
-            PropertySource nacosDefaultPropertySource = buildPropertySource(resourceLoader);
+            PropertySource bingPropertySource = buildPropertySource(resourceLoader);
             MutablePropertySources propertySources = environment.getPropertySources();
-            // append nacosDefaultPropertySource as last one in order to be overrided by higher order
-            propertySources.addLast(nacosDefaultPropertySource);
+            // 这一步是将其添加到系统环境
+            propertySources.addLast(bingPropertySource);
         } catch (IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
         }
