@@ -1,3 +1,7 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 cn.choleece.base.framework.redis.RedisAutoConfiguration,\
 cn.choleece.base.zk.config.ZookeeperAutoConfiguration
+
+# EnvironmentPostProcessor
+org.springframework.boot.env.EnvironmentPostProcessor=\
+cn.choleece.base.framework.spring.environment.BingEnvironmentPostProcessor
