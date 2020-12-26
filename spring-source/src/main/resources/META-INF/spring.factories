@@ -1,3 +1,11 @@
 # EnvironmentPostProcessor
 org.springframework.boot.env.EnvironmentPostProcessor=\
 cn.choleece.base.springsource.env.BingEnvironmentPostProcessor
+
+# ApplicationListener
+org.springframework.context.ApplicationListener=\
+cn.choleece.base.springsource.listener.ApplicationEnvironmentPreparedEventListener
+
+# SpringApplicationRunListener
+org.springframework.boot.SpringApplicationRunListener=\
+cn.choleece.base.springsource.listener.BingSpringApplicationRunListener

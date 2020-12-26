@@ -16,6 +16,11 @@ public class Application {
         ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
         System.out.println(context.getEnvironment().getProperty("name"));
 
+        System.setProperty("sex", "Male");
+
+        System.out.println(System.getProperty("sex"));
+
+        System.out.println(context.getEnvironment().getProperty("sex"));
         context.close();
     }
     
