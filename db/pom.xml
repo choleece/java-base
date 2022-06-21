@@ -12,7 +12,7 @@
     <artifactId>db</artifactId>
 
     <properties>
-        <mysql-con-version>5.1.47</mysql-con-version>
+        <mysql-con-version>8.0.28</mysql-con-version>
         <javassist.version>3.24.1-GA</javassist.version>
         <metrics.version>3.2.4</metrics.version>
         <simpleclient.version>0.0.26</simpleclient.version>
